@@ -1,0 +1,81 @@
+# 依赖目录
+node_modules/
+
+# 构建输出
+dist/
+build/
+out/
+
+# 日志文件
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+
+# 编辑器目录和文件
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.swp
+*.swo
+
+# 测试覆盖率
+coverage/
+.nyc_output/
+
+# 调试日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 本地开发配置
+.local-*
+
+# 临时文件
+.tmp/
+.temp/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# TypeScript 缓存
+*.tsbuildinfo
+
+# 可选 npm 缓存目录
+.npm
+
+# 可选 eslint 缓存
+.eslintcache
+
+# 可选测试运行器缓存
+.parcel-cache
+.cache/
+
+# 可选 next.js 构建输出
+.next/
+
+# 可选 nuxt.js 构建输出
+.nuxt/
+
+# 可选 vuepress 构建输出
+.vuepress/dist/
+
+# 可选服务器less 函数目录
+.serverless/
+
+# 可选 FuseBox 缓存
+.fusebox/
+
+# 可选动态链接库
+*.so
+
+# 可选静态站点目录
+.svelte-kit/

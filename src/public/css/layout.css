@@ -1,0 +1,86 @@
+/* 基础布局样式 */
+body {
+    font-family: sans-serif;
+    margin: 0;
+    background-color: #f4f4f9;
+    color: #333;
+    display: flex;
+    min-height: 100vh;
+    justify-content: center;
+    align-items: stretch; 
+}
+
+.main-layout-container {
+    display: flex;
+    width: 95%; 
+    max-width: 1600px; 
+    margin: 15px auto; 
+    background: white;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden; 
+}
+
+#summary-panel {
+    flex: 1;
+    padding: 1.5em;
+    background-color: #f7f9fc;
+    border-right: 1px solid #e0e0e0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#summary-panel h2 {
+    margin-top: 0;
+    color: #007bff;
+}
+
+#summary {
+    background-color: #fff;
+    padding: 1em;
+    border-radius: 8px;
+    margin-bottom: 1em;
+    border: 1px solid #e0e0e0;
+    flex-grow: 1; /* Allow summary to take available space if needed */
+    overflow-y: auto;
+}
+
+#interaction-panel {
+    flex: 2;
+    padding: 1.5em;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* 标签页布局 */
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 15px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+    .main-layout-container {
+        flex-direction: column;
+        width: 100%;
+        margin: 0;
+        border-radius: 0;
+    }
+    
+    #summary-panel {
+        flex: none;
+        border-right: none;
+        border-bottom: 1px solid #e0e0e0;
+    }
+}

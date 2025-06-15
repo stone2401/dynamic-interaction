@@ -1,0 +1,251 @@
+/* 组件样式 */
+
+/* 标签页 */
+.tab {
+    padding: 8px 15px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    margin-right: 5px;
+    background-color: #f0f0f0;
+    transition: all 0.2s ease;
+}
+
+.tab.active {
+    background-color: #fff;
+    border-color: #ddd;
+    border-bottom-color: #fff;
+    margin-bottom: -1px;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.tab:hover:not(.active) {
+    background-color: #e0e0e0;
+}
+
+/* 输入区域 */
+#feedback-container {
+    margin-bottom: 1.2em;
+}
+
+#feedback-input {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 0.8em;
+    min-height: 100px;
+    width: 100%;
+    box-sizing: border-box;
+    background: white;
+    cursor: text;
+}
+
+#feedback-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,.25);
+}
+
+#feedback-input:empty::before {
+    content: attr(placeholder);
+    color: #999;
+    pointer-events: none;
+}
+
+/* 命令区域 */
+#command-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.8em;
+    background-color: #f5f5f5;
+    border-radius: 5px;
+    padding: 8px 10px;
+    border: 1px solid #e0e0e0;
+}
+
+#command-container label {
+    margin-bottom: 0;
+    margin-right: 8px;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+#command-container input[type="text"] {
+    flex-grow: 1;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin-right: 8px;
+    font-size: 0.9em;
+    height: 20px;
+}
+
+#command-container input[type="text"]:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,.15);
+}
+
+/* 图片预览区域 */
+#image-preview-container {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: #f0f0f0;
+    padding: 10px;
+    border-radius: 5px;
+    min-height: 50px; 
+}
+
+.preview-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    width: 100px; 
+}
+
+.preview-item img {
+    max-width: 100%;
+    height: 60px;
+    border-radius: 4px;
+    object-fit: cover; 
+    margin-bottom: 5px;
+}
+
+.preview-item .file-name {
+    font-size: 0.75em;
+    width: 100%; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.preview-item .remove-image {
+    background: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    line-height: 18px;
+    text-align: center;
+    cursor: pointer;
+    padding: 0;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.preview-item .remove-image:hover {
+    background: #e03c3c;
+}
+
+/* 按钮 */
+button {
+    padding: 0.8em 1.2em;
+    margin-top: 0.5em;
+    border-radius: 5px;
+    border: 1px solid #007bff;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+button:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+/* 结果显示区域 */
+#results {
+    flex-grow: 1;
+    white-space: pre-wrap;
+    background: #f9f9f9;
+    padding: 1em;
+    border-radius: 8px;
+    font-family: monospace;
+    min-height: 100px;
+    border: 1px solid #e0e0e0;
+    overflow-y: auto;
+    margin-top: 0;
+}
+
+/* 标签和表单元素 */
+label {
+    display: block;
+    margin-bottom: 0.5em;
+    font-weight: bold;
+}
+
+/* 图片预览模态框样式 */
+.modal {
+    display: none; /* 默认隐藏 */
+    position: fixed; /* 固定定位，覆盖整个屏幕 */
+    z-index: 1000; /* 置于顶层 */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* 如果内容过多则允许滚动 */
+    background-color: rgba(0,0,0,0.85); /* 半透明黑色背景 */
+    padding-top: 60px; /* 顶部留出一些空间 */
+}
+
+.modal-content {
+    margin: auto;
+    display: block;
+    max-width: 80%;
+    max-height: 80vh; /* 最大高度为视窗的80% */
+    animation-name: zoom;
+    animation-duration: 0.3s;
+}
+
+/* 模态框动画 (放大效果) */
+@keyframes zoom {
+    from {transform:scale(0.5)}
+    to {transform:scale(1)}
+}
+
+#modal-caption {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    text-align: center;
+    color: #ccc;
+    padding: 10px 0;
+    height: 50px; /* 固定标题高度 */
+}
+
+.close-modal-btn {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.close-modal-btn:hover,
+.close-modal-btn:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* 响应式：小屏幕上图片宽度100% */
+@media (max-width: 700px){
+    .modal-content {
+        max-width: 95%;
+    }
+}

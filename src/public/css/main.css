@@ -1,0 +1,31 @@
+/* 主样式文件 - 导入其他样式模块 */
+@import 'layout.css';
+@import 'components.css';
+
+/* 全局样式和重置 */
+* {
+    box-sizing: border-box;
+}
+
+body, h1, h2, h3, h4, h5, h6, p, ul, ol {
+    margin: 0;
+    padding: 0;
+}
+
+/* 可访问性增强 */
+:focus {
+    outline: 2px solid rgba(0, 123, 255, 0.5);
+    outline-offset: 2px;
+}
+
+/* 打印样式 */
+@media print {
+    .main-layout-container {
+        box-shadow: none;
+        width: 100%;
+    }
+    
+    button, .tab {
+        display: none;
+    }
+}

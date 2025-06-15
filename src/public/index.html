@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式反馈系统</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body>
+    <div class="main-layout-container">
+        <div id="summary-panel">
+            <h2>AI Agent Summary</h2>
+            <div id="summary">Connecting...</div>
+        </div>
+
+        <div id="interaction-panel">
+            <!-- 标签页导航 -->
+            <div class="tabs">
+                <div class="tab active" data-target="feedback-tab">反馈</div>
+                <div class="tab" data-target="command-tab">命令执行</div>
+            </div>
+
+            <!-- 反馈标签页内容 -->
+            <div id="feedback-tab" class="tab-content active">
+                <div id="feedback-container">
+                    <label for="feedback-input">您的反馈 (文本、粘贴或拖放图片):</label>
+                    <div id="feedback-input" contenteditable="true" placeholder="在此输入反馈或拖放图片..."></div>
+                    <div id="image-preview-container" style="display: none;"></div>
+                    <button id="send-feedback-btn">发送反馈</button>
+                </div>
+            </div>
+
+            <!-- 命令标签页内容 -->
+            <div id="command-tab" class="tab-content">
+                <div id="command-container">
+                    <label for="command">执行命令:</label>
+                    <input type="text" id="command" placeholder="例如: ls -la">
+                    <button id="run-command-btn">执行</button>
+                </div>
+                <div id="results"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用模块化JavaScript文件 -->
+    <script type="module" src="js/main.js"></script>
+
+    <!-- 图片预览模态框 -->
+    <div id="image-modal" class="modal">
+        <!-- <span class="close-modal-btn">&times;</span> -->
+        <img class="modal-content" id="modal-image">
+        <div id="modal-caption"></div>
+    </div>
+</body>
+
+</html>

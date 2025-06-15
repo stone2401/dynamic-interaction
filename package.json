@@ -1,0 +1,53 @@
+{
+  "name": "dynamic-interaction",
+  "version": "1.0.0",
+  "description": "Dynamic interaction\n动态交互mcp，用于cursor、windsurf、trae 等 AI 智能编辑器 Agent 运行时交互使用",
+  "main": "dist/index.js",
+  "bin": {
+    "dynamic-interaction": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc && chmod 755 dist/index.js dist/cli.js && npm run copy-assets",
+    "copy-assets": "mkdir -p dist/public && cp -r src/public/. dist/public/",
+    "start": "node dist/index.js",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec ts-node src/index.ts"
+  },
+  "keywords": [
+    "dynamic-interaction",
+    "mcp",
+    "cursor",
+    "windsurf",
+    "trae"
+  ],
+  "author": {
+    "name": "stone2401",
+    "url": "https://github.com/stone2401"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@9.10.0^",
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/multer": "^1.4.13",
+    "@types/node": "^24.0.1",
+    "@types/ws": "^8.18.1",
+    "copyfiles": "^2.4.1",
+    "express": "^5.1.0",
+    "multer": "^2.0.1",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "ws": "^8.18.2"
+  },
+  "dependencies": {
+    "open": "^9.1.0",
+    "@modelcontextprotocol/sdk": "^1.12.3",
+    "zod": "^3.25.64"
+  }
+}
