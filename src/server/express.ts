@@ -17,8 +17,6 @@ export const server = http.createServer(app);
 export function configureExpress(): void {
   // 提供静态文件服务
   app.use(express.static(path.join(__dirname, '..', 'public')));
-  
-  // 这里可以添加更多的 Express 配置，如路由、中间件等
 }
 
 /**

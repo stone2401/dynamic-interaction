@@ -22,7 +22,7 @@ function switchTab(tabId) {
     document.getElementById(tabId).classList.add('active');
     
     // 激活对应的标签
-    document.querySelector(`.tab[onclick*="${tabId}"]`).classList.add('active');
+    document.querySelector(`.tab[data-target="${tabId}"]`).classList.add('active');
 }
 
 /**

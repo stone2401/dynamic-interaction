@@ -1,74 +1,47 @@
 /**
  * MCP solicit-input 工具实现
+ * 此模块现在负责调用服务器来启动用户交互，并等待结果。
  */
 
-import { WebSocket } from 'ws';
-import { exec } from 'child_process';
-import { IncomingMessage } from 'http';
+import { requestFeedbackSession } from '../server/websocket'; // 从服务器模块导入
+import { UserFeedback } from '../types/feedback'; // 引入共用的用户反馈类型定义
+import { PORT } from '../config'; // 新增：导入 PORT
 
 /**
- * 处理 WebSocket 连接
- * @param ws WebSocket 连接
- * @param req HTTP 请求
+ * Agent 调用此函数来请求用户输入。
+ * 它会与服务器通信，启动一个 UI 会话，并等待用户反馈。
+ * @param projectDirectory 需要用户审核的项目目录的绝对路径。
+ * @param summary 向用户展示的 AI 工作摘要。
+ * @returns 一个 Promise，解析为用户提供的反馈。
  */
-export function handleSolicitInputConnection(ws: WebSocket, req: IncomingMessage): void {
-    console.log('客户端已连接');
+export async function solicitUserInput(
+    projectDirectory: string,
+    summary: string
+): Promise<UserFeedback> {
+    console.log(`MCP: 请求用户输入。项目目录: ${projectDirectory}, 摘要: ${summary}`);
 
-    // 连接建立时向客户端发送摘要
-    // 在实际场景中，此摘要将是动态的
-    ws.send(JSON.stringify({ type: 'summary', data: 'AI 正在等待您的反馈。请提供文本、上传图片或运行命令。' }));
+    // 1. 通知服务器准备接收此会话的反馈
+    // requestFeedbackSession 会立即返回一个 Promise，并在内部设置 pendingSessionRequest
+    const feedbackPromise = requestFeedbackSession(summary, projectDirectory);
 
-    ws.on('message', (message: string) => {
-        try {
-            const parsedMessage = JSON.parse(message);
-            console.log('收到消息:', parsedMessage);
+    // 2. 尝试为用户打开浏览器界面
+    const url = `http://localhost:${PORT}`;
+    console.log(`MCP: 指导用户在浏览器中打开: ${url}`);
+    try {
+        const open = (await import('open')).default;
+        await open(url);
+    } catch (e) {
+        console.warn(`MCP: 自动打开浏览器失败，请用户手动访问: ${url}`);
+        // 即便自动打开失败，也应继续等待反馈，用户可能手动打开
+    }
 
-            switch (parsedMessage.type) {
-                case 'command':
-                    if (typeof parsedMessage.data === 'string') {
-                        // 执行命令并返回输出
-                        exec(parsedMessage.data, (error, stdout, stderr) => {
-                            if (error) {
-                                ws.send(JSON.stringify({ type: 'command_result', data: `错误: ${error.message}` }));
-                                return;
-                            }
-                            if (stderr) {
-                                ws.send(JSON.stringify({ type: 'command_result', data: `标准错误: ${stderr}` }));
-                                return;
-                            }
-                            ws.send(JSON.stringify({ type: 'command_result', data: stdout }));
-                        });
-                    } else {
-                        ws.send(JSON.stringify({ type: 'error', data: '无效的命令格式。' }));
-                    }
-                    break;
-
-                case 'composite_feedback':
-                    const { text, imageData } = parsedMessage.data;
-                    console.log('收到复合反馈:');
-                    if (text) {
-                        console.log('  文本:', text);
-                    }
-                    if (imageData) {
-                        console.log('  图片(前100个字符):', imageData.substring(0, 100));
-                    }
-                    ws.send(JSON.stringify({ type: 'info', data: '反馈已成功接收。' }));
-                    break;
-
-                default:
-                    ws.send(JSON.stringify({ type: 'error', data: '未知的消息类型。' }));
-            }
-        } catch (e) {
-            console.error('无法解析或处理消息:', e);
-            ws.send(JSON.stringify({ type: 'error', data: '无效的消息格式。' }));
-        }
-    });
-
-    ws.on('close', () => {
-        console.log('客户端已断开连接');
-    });
-
-    ws.on('error', (error) => {
-        console.error('WebSocket 错误:', error);
-    });
+    // 3. 等待服务器通过 WebSocket 收集到的反馈
+    try {
+        const feedback = await feedbackPromise;
+        console.log('MCP: 从服务器收到反馈:', feedback);
+        return feedback;
+    } catch (error) {
+        console.error('MCP: 获取用户反馈时出错:', error);
+        return { error: (error instanceof Error ? error.message : String(error)) };
+    }
 }

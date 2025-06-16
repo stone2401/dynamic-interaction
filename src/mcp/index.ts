@@ -5,6 +5,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { MCP_CONFIG, DEFAULT_TIMEOUT } from '../config';
+import { solicitUserInput } from './solicit-input';
 
 // 创建 MCP 服务器实例
 export const mcpServer = new McpServer({
@@ -47,19 +48,48 @@ export function configureMcpServer(): void {
             timeout: DEFAULT_TIMEOUT,
             project_directory: "/path/to/project" // 建议提供一个示例或默认值
         },
-        async (res) => {
-            return {
-                content: [
-                    {
-                        type: "text",
-                        text: "用户输入的反馈文本",
-                    },
-                    {
-                        type: "image",
-                        data: "base64 encoded image data",
-                        mimeType: "image/png",
+        async ({ summary, project_directory, timeout }) => {
+            try {
+                // 调用实际的 solicitUserInput 函数，与前端 UI 建立会话并等待反馈
+                const feedback = await solicitUserInput(project_directory, summary);
+
+                // 将反馈转换为 MCP 期望的返回格式（List<any>）
+                const content: any[] = [];
+
+                if (feedback.text) {
+                    content.push({ type: "text", text: feedback.text });
+                }
+
+                if (feedback.imageData) {
+                    if (Array.isArray(feedback.imageData)) {
+                        feedback.imageData.forEach((img) =>
+                            content.push({ type: "image", data: img })
+                        );
+                    } else {
+                        content.push({ type: "image", data: feedback.imageData });
                     }
-                ]
+                }
+
+                if (feedback.commandOutput) {
+                    content.push({ type: "command_output", text: feedback.commandOutput });
+                }
+
+                // 如果没有内容（例如超时或空反馈），返回默认 continue
+                if (content.length === 0) {
+                    content.push({ type: "text", text: "continue" });
+                }
+
+                return { content };
+            } catch (error) {
+                // 发生错误时通知调用方
+                return {
+                    content: [
+                        {
+                            type: "error",
+                            text: (error instanceof Error ? error.message : String(error)),
+                        },
+                    ],
+                };
             }
         }
     );

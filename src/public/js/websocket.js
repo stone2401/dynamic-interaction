@@ -4,29 +4,40 @@
  */
 
 // 创建 WebSocket 连接
+// 注意: 与服务器约定使用 ws://<host> (同源)
 const ws = new WebSocket(`ws://${window.location.host}`);
 const summaryDiv = document.getElementById('summary');
 
 // WebSocket 事件处理
 ws.onopen = () => {
-    console.log('WebSocket 连接已建立');
+    console.log('客户端: WebSocket 连接已成功打开 (onopen 事件触发)。');
     summaryDiv.textContent = 'WebSocket 连接已建立，等待 AI 响应...';
 };
 
 ws.onmessage = (event) => {
+    console.log('收到消息:', event.data);
     try {
         const data = JSON.parse(event.data);
         if (data.type === 'summary') {
-            summaryDiv.innerHTML = data.content;
+            if (data.data !== undefined && data.data !== null) {
+                summaryDiv.innerHTML = data.data;
+            } else {
+                summaryDiv.innerHTML = 'AI Agent 正在准备摘要...'; // 或者其他合适的占位符
+                console.warn('收到的摘要消息格式不完整，缺少 "data" 字段。服务器发送的消息:', event.data);
+            }
         } else if (data.type === 'command_result') {
             const resultsDiv = document.getElementById('results');
-            resultsDiv.textContent = data.content;
-            
+            resultsDiv.textContent = data.data;
+
             // 如果用户在命令标签页，保持当前标签页
             // 否则自动切换到命令标签页显示结果
             if (!document.getElementById('command-tab').classList.contains('active')) {
                 switchTab('command-tab');
             }
+        } else if (data.type === 'server_log') {
+            // 服务端日志
+            const { level, text } = data.data;
+            console[level]('%c[Server] ' + text, 'color: grey');
         }
     } catch (e) {
         console.error('解析 WebSocket 消息时出错:', e);
@@ -48,7 +59,7 @@ function sendCommand(command) {
     if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
             type: 'command',
-            content: command
+            data: command
         }));
         return true;
     } else {
@@ -66,7 +77,7 @@ function sendFeedback(text, images) {
     if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
             type: 'composite_feedback',
-            content: {
+            data: {
                 text: text,
                 imageData: images
             }
