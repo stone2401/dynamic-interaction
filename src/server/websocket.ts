@@ -38,8 +38,8 @@ function _handleWebSocketConnectionLogic(
     console.log(`客户端已连接，会话开始。项目目录: ${projectDirectory}`);
     activeSockets.add(ws);
 
-    // 连接建立时向客户端发送摘要
-    ws.send(JSON.stringify({ type: 'summary', data: summary }));
+    // 在收到客户端准备就绪的消息前，不立即发送摘要，避免消息在客户端尚未准备时丢失。
+    let summarySent = false;
 
     let collectedFeedback: UserFeedback = {};
 
@@ -49,6 +49,14 @@ function _handleWebSocketConnectionLogic(
             console.log('服务器收到消息:', parsedMessage);
 
             switch (parsedMessage.type) {
+                case 'client_ready':
+                    console.log('客户端已准备就绪，发送摘要。', summary);
+                    if (!summarySent) {
+                        ws.send(JSON.stringify({ type: 'summary', data: summary }));
+                        summarySent = true;
+                    }
+                    break;
+
                 case 'command':
                     if (typeof parsedMessage.data === 'string') {
                         exec(parsedMessage.data, { cwd: projectDirectory }, (error, stdout, stderr) => {
@@ -168,9 +176,7 @@ export function requestFeedbackSession(summary: string, projectDirectory: string
  */
 export function configureWebSocketServer(): void {
     wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-        console.log('WebSocket 服务器收到新的连接请求。');
         if (pendingSessionRequest && !pendingSessionRequest.ws) {
-            console.log('将新连接与待处理的反馈会话请求关联。');
             pendingSessionRequest.ws = ws;
 
             _handleWebSocketConnectionLogic(

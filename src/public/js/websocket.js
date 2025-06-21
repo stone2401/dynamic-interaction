@@ -12,6 +12,9 @@ const summaryDiv = document.getElementById('summary');
 ws.onopen = () => {
     console.log('客户端: WebSocket 连接已成功打开 (onopen 事件触发)。');
     summaryDiv.textContent = 'WebSocket 连接已建立，等待 AI 响应...';
+
+    // 告诉服务器客户端已准备就绪，可安全地发送摘要数据
+    ws.send(JSON.stringify({ type: 'client_ready' }));
 };
 
 ws.onmessage = (event) => {

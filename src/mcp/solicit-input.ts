@@ -20,11 +20,6 @@ export async function solicitUserInput(
 ): Promise<UserFeedback> {
     console.log(`MCP: 请求用户输入。项目目录: ${projectDirectory}, 摘要: ${summary}`);
 
-    // 1. 通知服务器准备接收此会话的反馈
-    // requestFeedbackSession 会立即返回一个 Promise，并在内部设置 pendingSessionRequest
-    const feedbackPromise = requestFeedbackSession(summary, projectDirectory);
-
-    // 2. 尝试为用户打开浏览器界面
     const url = `http://localhost:${PORT}`;
     console.log(`MCP: 指导用户在浏览器中打开: ${url}`);
     try {
@@ -32,10 +27,8 @@ export async function solicitUserInput(
         await open(url);
     } catch (e) {
         console.warn(`MCP: 自动打开浏览器失败，请用户手动访问: ${url}`);
-        // 即便自动打开失败，也应继续等待反馈，用户可能手动打开
     }
-
-    // 3. 等待服务器通过 WebSocket 收集到的反馈
+    const feedbackPromise = requestFeedbackSession(summary, projectDirectory);
     try {
         const feedback = await feedbackPromise;
         console.log('MCP: 从服务器收到反馈:', feedback);
