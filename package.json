@@ -14,8 +14,9 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc && chmod 755 dist/src/index.js dist/src/cli.js && npm run copy-assets",
-    "copy-assets": "mkdir -p dist/src/public && cp -r src/public/. dist/src/public/",
+    "build": "rm -rf dist && tsc && chmod 755 dist/src/index.js dist/src/cli.js && npm run build:frontend && npm run copy-assets",
+    "build:frontend": "tsc --project tsconfig.frontend.json",
+    "copy-assets": "mkdir -p dist/src/public/js && cp -r dist/frontend/public/ts/*.js dist/src/public/js/ && cp -r src/public/css dist/src/public/ && cp src/public/index.html dist/src/public/ && rm -rf dist/src/public/ts",
     "start": "node dist/src/index.js",
     "dev": "nodemon --watch 'src/**/*.ts' --exec ts-node src/index.ts",
     "test": "jest --runInBand"

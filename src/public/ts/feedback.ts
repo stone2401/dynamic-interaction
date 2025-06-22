@@ -3,43 +3,43 @@
  * 处理用户反馈的收集和发送
  */
 
-import { sendFeedback } from './websocket.js';
-import { clearPreview, attachedImageData } from './imageHandler.js';
+import { sendFeedback } from './websocket';
+import { clearPreview, attachedImageData } from './imageHandler';
 
-const feedbackInput = document.getElementById('feedback-input');
-const resultsDiv = document.getElementById('results');
+const feedbackInput = document.getElementById('feedback-input') as HTMLDivElement;
+const resultsDiv = document.getElementById('results') as HTMLDivElement;
 
 /**
  * 发送复合反馈（文本+图片）
  * @returns {boolean} 反馈是否成功发送
  */
-function sendCompositeFeedback() {
+function sendCompositeFeedback(): boolean {
     const text = feedbackInput.innerText.trim();
-    
+
     // 检查是否有文本或图片
     if (!text && (!attachedImageData || attachedImageData.length === 0)) {
         resultsDiv.textContent = '请输入反馈文本或添加图片';
         return false;
     }
-    
+
     // 发送反馈到服务器
-    const success = sendFeedback(text, attachedImageData);
-    
+    const success = sendFeedback(text, attachedImageData as CustomImageData[]);
+
     if (success) {
         resultsDiv.textContent = '反馈已发送';
-        
+
         // 清空反馈输入框和图片预览
         feedbackInput.innerText = '';
         clearPreview();
     }
-    
+
     return success;
 }
 
 /**
  * 初始化反馈功能
  */
-function initializeFeedbackHandlers() {
+function initializeFeedbackHandlers(): void {
     // 为发送反馈按钮添加点击事件
     const sendButton = document.getElementById('send-feedback-btn');
     if (sendButton) {
