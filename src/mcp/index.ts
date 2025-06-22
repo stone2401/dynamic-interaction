@@ -6,6 +6,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { MCP_CONFIG, DEFAULT_TIMEOUT } from '../config';
 import { solicitUserInput } from './solicit-input';
+import { logger } from "../logger";
+import { z } from 'zod';
 
 // 创建 MCP 服务器实例
 export const mcpServer = new McpServer({
@@ -22,9 +24,10 @@ export const mcpServer = new McpServer({
  */
 export function configureMcpServer(): void {
     // 配置 solicit-input 工具
-    mcpServer.tool(
+    mcpServer.registerTool(
         "solicit-input",
-        `
+        {
+            description: `
 # 工具名称: solicit-input
 
 **功能描述:**
@@ -42,13 +45,18 @@ export function configureMcpServer(): void {
 
 **返回值 (Returns):**
 一个包含用户所有反馈的列表 (List)。每个元素都是一个对象，如 \`{ type: "text", text: "..." }\` 或 \`{ type: "image", data: "..." }\`。超时或无反馈则返回空列表 \`{type: "text", text: "continue"}\`。
-    `,
-        {
-            summary: "AI 工作完成的摘要说明",
-            timeout: DEFAULT_TIMEOUT,
-            project_directory: "/path/to/project" // 建议提供一个示例或默认值
+`,
+            inputSchema: {
+                summary: z.string().describe("向用户展示的 AI 工作摘要。应清晰说明 AI 完成了什么，并引导用户反馈。"),
+                project_directory: z.string().describe("需要用户审核的项目目录的绝对路径。"),
+                timeout: z.number().optional().describe(`等待用户反馈的超时时间（秒）。默认值: ${DEFAULT_TIMEOUT}。`).default(DEFAULT_TIMEOUT)
+            },
+            annotations: {
+                displayName: "用户反馈收集器"
+            }
         },
         async ({ summary, project_directory, timeout }) => {
+            logger.info(`MCP: 请求用户输入。项目目录: ${project_directory}, 摘要: ${summary}`);
             try {
                 // 调用实际的 solicitUserInput 函数，与前端 UI 建立会话并等待反馈
                 const feedback = await solicitUserInput(project_directory, summary);

@@ -9,7 +9,6 @@ import { freePortIfOccupied } from './server/port';
 import { configureExpress, startExpressServer } from './server/express';
 import { configureWebSocketServer } from './server/websocket';
 import { configureMcpServer, startMcpServer } from './mcp';
-import { setupLogBroadcast } from './server/logger';
 
 /**
  * 应用程序主函数
@@ -20,8 +19,6 @@ async function main() {
 
     // 2. 配置 WebSocket 服务器 (设置连接处理逻辑)
     configureWebSocketServer(); // 重要：确保这在服务器监听前或同时配置
-    // 设置日志广播，使 console.log 同时推送给 WebSocket 客户端
-    setupLogBroadcast();
     configureMcpServer();
 
     // 3. 启动 HTTP 服务器 (WebSocket 服务器附加在上面)

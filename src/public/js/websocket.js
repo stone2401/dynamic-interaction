@@ -79,7 +79,7 @@ function sendCommand(command) {
 function sendFeedback(text, images) {
     if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
-            type: 'composite_feedback',
+            type: 'submit_feedback',
             data: {
                 text: text,
                 imageData: images

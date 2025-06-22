@@ -19,3 +19,22 @@ export const DEFAULT_TIMEOUT = 600;
 
 // 新增：WebSocket 会话等待客户端连接的超时时间（秒）
 export const WEBSOCKET_SESSION_TIMEOUT_SECONDS = Number(process.env.WEBSOCKET_SESSION_TIMEOUT_SECONDS) || 30;
+
+// 新增：会话租约超时时间（秒），用于处理中的任务
+export const SESSION_LEASE_TIMEOUT_SECONDS = Number(process.env.SESSION_LEASE_TIMEOUT_SECONDS) || 300; // 默认 5 分钟
+
+// 日志配置
+export const LOG_CONFIG = {
+    // 日志文件存储目录，默认为项目根目录下的 logs 目录
+    dir: process.env.LOG_DIR || 'logs',
+    // 错误日志文件名（不含路径）
+    errorFile: process.env.LOG_ERROR_FILE || 'error.log',
+    // 综合日志文件名（不含路径）
+    combinedFile: process.env.LOG_COMBINED_FILE || 'combined.log',
+    // 日志级别：error, warn, info, http, verbose, debug, silly
+    level: process.env.LOG_LEVEL || 'info',
+    // 是否在控制台输出带颜色的日志
+    colorize: process.env.LOG_COLORIZE !== 'false', // 默认启用
+    // 是否将日志输出到文件
+    fileLogging: process.env.LOG_TO_FILE !== 'false' // 默认启用
+};
