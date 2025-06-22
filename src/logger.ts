@@ -8,10 +8,11 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { LOG_CONFIG } from './config';
 import { WebSocketTransport } from './server/websocketTransport';
+import DailyRotateFile from 'winston-daily-rotate-file';
 
 // 确保日志目录存在
-const logDir = path.isAbsolute(LOG_CONFIG.dir) 
-    ? LOG_CONFIG.dir 
+const logDir = path.isAbsolute(LOG_CONFIG.dir)
+    ? LOG_CONFIG.dir
     : path.join(process.cwd(), LOG_CONFIG.dir);
 
 // 确保日志目录存在
@@ -60,6 +61,20 @@ export const logger = winston.createLogger({
     transports: [
         consoleTransport,
         new WebSocketTransport(),
+        new DailyRotateFile({
+            filename: path.join(logDir, LOG_CONFIG.combinedFile),
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '14d'
+        }),
+        new DailyRotateFile({
+            filename: path.join(logDir, LOG_CONFIG.errorFile),
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '14d'
+        }),
         ...fileTransports
     ],
     exitOnError: false // 防止程序因日志错误而崩溃
