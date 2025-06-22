@@ -37,14 +37,14 @@ export function configureMcpServer(): void {
 
 * \`project_directory\` (str, 必填): 需要用户审核的项目目录的绝对路径。
 * \`summary\` (str, 必填): 向用户展示的 AI 工作摘要。应清晰说明 AI 完成了什么，并引导用户反馈。
-* \`timeout\` (int, 选填): 等待用户反馈的超时时间（秒）。默认值: ${DEFAULT_TIMEOUT}。
+* \`timeout\` (int, 无效值): 等待用户反馈的超时时间（秒）。默认值: ${DEFAULT_TIMEOUT}。
 
 **用户交互流程:**
 1.  UI 界面会显示 \`summary\` 中的工作摘要。
 2.  用户可以通过执行命令、输入文本、上传图片等方式提供反馈。
 
 **返回值 (Returns):**
-一个包含用户所有反馈的列表 (List)。每个元素都是一个对象，如 \`{ type: "text", text: "..." }\` 或 \`{ type: "image", data: "..." }\`。超时或无反馈则返回空列表 \`{type: "text", text: "continue"}\`。
+一个包含用户所有反馈的列表 (List)。每个元素都是一个对象，如 \`{ type: "text", text: "..." }\` 或 \`{ type: "image", data: "..." }\`。超时或无反馈则返回空列表 \`{type: "text", text: "用户未提供反馈"}\`。
 `,
             inputSchema: {
                 summary: z.string().describe("向用户展示的 AI 工作摘要。应清晰说明 AI 完成了什么，并引导用户反馈。"),
@@ -65,7 +65,7 @@ export function configureMcpServer(): void {
                 const content: any[] = [];
 
                 if (feedback.text) {
-                    content.push({ type: "text", text: feedback.text });
+                    content.push({ type: "text", text: `用户反馈: ${feedback.text}` });
                 }
 
                 if (feedback.imageData) {
@@ -79,12 +79,12 @@ export function configureMcpServer(): void {
                 }
 
                 if (feedback.commandOutput) {
-                    content.push({ type: "command_output", text: feedback.commandOutput });
+                    content.push({ type: "command_output", text: `命令输出: ${feedback.commandOutput}` });
                 }
 
                 // 如果没有内容（例如超时或空反馈），返回默认 continue
                 if (content.length === 0) {
-                    content.push({ type: "text", text: "continue" });
+                    content.push({ type: "text", text: "用户未提供反馈，继续执行" });
                 }
 
                 return { content };
