@@ -1,6 +1,13 @@
 /* 组件样式 */
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
 .panel h2 {
-    margin: 0 0 16px 0;
+    margin: 0;
     font-size: 16px;
     font-weight: 600;
     color: #e0e0e0;
@@ -154,17 +161,17 @@ ul ul, ol ol, ul ol, ol ul {
 }
 
 #send-feedback-btn {
-    width: 100%;
-    padding: 12px;
+    padding: 6px 16px;
     border: none;
     background-color: #0a84ff;
     color: white;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-    margin-top: auto; /* Pushes button to the bottom */
+    font-size: 14px;
+    font-weight: 500;
     transition: background-color 0.3s;
+    white-space: nowrap;
+    margin-left: 16px;
 }
 
 #send-feedback-btn:hover {
