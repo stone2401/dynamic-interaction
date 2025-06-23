@@ -38,6 +38,17 @@ interface ServerLogMessage extends WebSocketMessage {
 }
 
 /**
+ * 会话信息消息
+ */
+interface SessionInfoMessage extends WebSocketMessage {
+  type: 'session_info';
+  data: {
+    sessionId: string;
+    timeout: number;
+  };
+}
+
+/**
  * 自定义图片数据接口
  */
 interface CustomImageData {

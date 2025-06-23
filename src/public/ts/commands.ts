@@ -3,7 +3,7 @@
  * 处理命令输入和执行
  */
 
-import { sendCommand } from './websocket';
+import { sendCommand } from './websocket.js';
 
 const commandInput = document.getElementById('command') as HTMLInputElement;
 const resultsDiv = document.getElementById('results') as HTMLDivElement;

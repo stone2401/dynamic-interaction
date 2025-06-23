@@ -3,6 +3,12 @@
  * 处理与服务器的 WebSocket 连接和消息传递
  */
 
+// 告诉 TypeScript marked 是一个全局变量 (从CDN加载)
+// 更明确的类型声明，而不是使用any
+declare namespace marked {
+  function parse(markdown: string, options?: any): string;
+}
+
 // 创建 WebSocket 连接
 // 注意: 与服务器约定使用 ws://<host> (同源)
 const ws = new WebSocket(`ws://${window.location.host}`);
@@ -24,30 +30,18 @@ ws.onmessage = (event: MessageEvent) => {
     if (data.type === 'summary') {
       const summaryData = data as SummaryMessage;
       if (summaryData.data !== undefined && summaryData.data !== null) {
-        summaryDiv.innerHTML = summaryData.data;
+        // 使用 marked.js 解析 Markdown
+        summaryDiv.innerHTML = marked.parse(summaryData.data);
       } else {
-        summaryDiv.innerHTML = 'AI Agent 正在准备摘要...'; // 或者其他合适的占位符
+        summaryDiv.textContent = 'AI Agent 正在准备摘要...';
         console.warn('收到的摘要消息格式不完整，缺少 "data" 字段。服务器发送的消息:', event.data);
       }
-    } else if (data.type === 'command_result') {
-      const commandData = data as CommandResultMessage;
-      const resultsDiv = document.getElementById('results') as HTMLDivElement;
-      resultsDiv.textContent = commandData.data;
-
-      // 如果用户在命令标签页，保持当前标签页
-      // 否则自动切换到命令标签页显示结果
-      const commandTab = document.getElementById('command-tab');
-      if (commandTab && !commandTab.classList.contains('active')) {
-        // 导入 switchTab 函数
-        import('./ui.js').then(({ switchTab }) => {
-          switchTab('command-tab');
-        });
-      }
     } else if (data.type === 'server_log') {
-      // 服务端日志
       const logData = data as ServerLogMessage;
       const { level, text } = logData.data;
       console[level]('%c[Server] ' + text, 'color: grey');
+    } else {
+      console.log('收到未知类型的消息:', data.type);
     }
   } catch (e) {
     console.error('解析 WebSocket 消息时出错:', e);

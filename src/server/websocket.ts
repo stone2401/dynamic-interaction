@@ -32,24 +32,24 @@ function checkQueueAndProcess(): void {
     if (activeSockets.size === 0 || sessionQueue.isWaitingQueueEmpty()) {
         return;
     }
-    
+
     // 尝试从队列中获取一个请求
     const sessionRequest = sessionQueue.leaseNext();
     if (!sessionRequest) {
         return; // 没有可用的请求
     }
-    
+
     // 从活跃连接中选择一个（这里简单地选择第一个连接）
     const ws = Array.from(activeSockets)[0];
-    
+
     logger.info(`分配会话 ID: ${sessionRequest.id} 到现有WebSocket连接`);
-    
+
     // 发送摘要到这个连接
     ws.send(JSON.stringify({ type: 'summary', data: sessionRequest.summary }));
-    
+
     // 将会话与此WebSocket关联
     sessionRequest.ws = ws;
-    
+
     // 设置会话处理逻辑
     setupWebSocketSessionHandlers(ws, sessionRequest);
 }
@@ -91,16 +91,16 @@ function setupWebSocketSessionHandlers(ws: WebSocket, sessionRequest: PendingSes
                         text,
                         imageData
                     };
-                    
+
                     logger.info(`最终反馈已提交 (会话 ID: ${sessionRequest.id}):`, collectedFeedback);
 
                     // 解析会话Promise并确认会话完成
                     sessionRequest.resolve(collectedFeedback);
                     sessionQueue.acknowledge(sessionRequest.id);
-                    
+
                     // 移除消息处理函数，准备处理下一个会话
                     ws.removeListener('message', messageHandler);
-                    
+
                     // 检查队列中是否有更多任务要处理
                     process.nextTick(checkQueueAndProcess);
                     break;
@@ -150,7 +150,7 @@ export function configureWebSocketServer(): void {
         // 将新的WebSocket连接添加到活跃连接池
         activeSockets.add(ws);
         logger.info(`新的WebSocket客户端已连接，当前活跃连接数: ${activeSockets.size}`);
-        
+
         // 设置基本的心跳检测，保持连接活跃
         const pingInterval = setInterval(() => {
             if (ws.readyState === ws.OPEN) {
@@ -159,14 +159,14 @@ export function configureWebSocketServer(): void {
                 clearInterval(pingInterval);
             }
         }, 30000); // 30秒发送一次ping
-        
+
         // 处理连接关闭
         ws.on('close', () => {
             activeSockets.delete(ws);
             clearInterval(pingInterval);
             logger.info(`WebSocket客户端已断开连接，当前活跃连接数: ${activeSockets.size}`);
         });
-        
+
         // 处理连接错误
         ws.on('error', (error) => {
             activeSockets.delete(ws);
@@ -174,10 +174,10 @@ export function configureWebSocketServer(): void {
             logger.error(`WebSocket客户端连接出错:`, error);
             logger.info(`当前活跃连接数: ${activeSockets.size}`);
         });
-        
+
         // 发送初始状态通知
         ws.send(JSON.stringify({ type: 'info', data: '已连接到反馈服务器，等待任务分配。' }));
-        
+
         // 检查是否有待处理的会话可以立即分配给这个新连接
         const sessionRequest = sessionQueue.leaseNext();
         if (sessionRequest) {
@@ -189,7 +189,7 @@ export function configureWebSocketServer(): void {
     });
 
     logger.info('WebSocket 服务器已配置并监听连接。');
-    
+
     // 设置定期检查队列的计时器，尝试分配消息给可用连接
     setInterval(() => {
         if (!sessionQueue.isWaitingQueueEmpty() && activeSockets.size > 0) {

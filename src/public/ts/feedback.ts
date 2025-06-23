@@ -3,8 +3,8 @@
  * 处理用户反馈的收集和发送
  */
 
-import { sendFeedback } from './websocket';
-import { clearPreview, attachedImageData } from './imageHandler';
+import { sendFeedback } from './websocket.js';
+import { clearPreview, attachedImageData } from './imageHandler.js';
 
 const feedbackInput = document.getElementById('feedback-input') as HTMLDivElement;
 const resultsDiv = document.getElementById('results') as HTMLDivElement;

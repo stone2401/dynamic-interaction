@@ -6,52 +6,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>交互式反馈系统</title>
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      // 配置 marked 使用 highlight.js 进行代码高亮
+      marked.setOptions({
+        highlight: function(code, lang) {
+          const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+          return hljs.highlight(code, { language }).value;
+        },
+        langPrefix: 'hljs language-',
+        breaks: true,
+        gfm: true
+      });
+    </script>
 </head>
 
 <body>
-    <div class="main-layout-container">
-        <div id="summary-panel">
-            <h2>AI Agent Summary</h2>
-            <div id="summary">Connecting...</div>
+    <div class="main-container">
+        <!-- AI 工作摘要 -->
+        <div id="summary-panel" class="panel">
+            <h2>
+                <span class="icon">💡</span> AI 工作摘要
+            </h2>
+            <hr>
+            <div id="summary"> - 我已根据您之前的需求“模仿苹果官网风格设计UI”，提供了两个版本的HTML...</div>
         </div>
 
-        <div id="interaction-panel">
-            <!-- 标签页导航 -->
-            <div class="tabs">
-                <div class="tab active" data-target="feedback-tab">反馈</div>
-                <div class="tab" data-target="command-tab">命令执行</div>
+        <!-- 提供反馈 -->
+        <div id="interaction-panel" class="panel">
+            <h2>
+                <span class="icon">▶️</span> 提供反馈
+            </h2>
+            <hr>
+
+            <div class="feedback-section">
+                <label for="feedback-input">文字反馈</label>
+                <div id="feedback-input" contenteditable="true" placeholder="请在这里输入您的指示或回复..."></div>
             </div>
 
-            <!-- 反馈标签页内容 -->
-            <div id="feedback-tab" class="tab-content active">
-                <div id="feedback-container">
-                    <label for="feedback-input">您的反馈 (文本、粘贴或拖放图片):</label>
-                    <div id="feedback-input" contenteditable="true" placeholder="在此输入反馈或拖放图片..."></div>
-                    <div id="image-preview-container" style="display: none;"></div>
-                    <button id="send-feedback-btn">发送反馈</button>
-                </div>
+            <div class="hints-section">
+                <p>小提示:</p>
+                <ul>
+                    <li>按 Ctrl+Enter (或 Cmd+Enter) 可快速提交</li>
+                    <li>支持 Ctrl+V (或 Cmd+V) 粘贴图片</li>
+                </ul>
             </div>
 
-            <!-- 命令标签页内容 -->
-            <div id="command-tab" class="tab-content">
-                <div id="command-container">
-                    <label for="command">执行命令:</label>
-                    <input type="text" id="command" placeholder="例如: ls -la">
-                    <button id="run-command-btn">执行</button>
+            <div class="attachment-section">
+                <label>图片附件 (可选)</label>
+                <div id="drop-zone">
+                    <div class="drop-zone-text">
+                        <span class="icon">📎</span>
+                        <p>点击选择或拖拽图片到此处</p>
+                        <span>支持 PNG, JPG, GIF, WebP 等格式</span>
+                    </div>
                 </div>
-                <div id="results"></div>
+                <div id="image-preview-container"></div>
             </div>
+
+            <button id="send-feedback-btn">提交反馈</button>
         </div>
     </div>
 
-    <!-- 使用模块化TypeScript编译后的JavaScript文件 -->
+    <!-- 脚本和模态框 -->
     <script type="module" src="js/main.js"></script>
-
-    <!-- 图片预览模态框 -->
     <div id="image-modal" class="modal">
-        <!-- <span class="close-modal-btn">&times;</span> -->
         <img class="modal-content" id="modal-image">
-        <div id="modal-caption"></div>
     </div>
 </body>
 

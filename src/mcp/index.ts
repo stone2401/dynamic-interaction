@@ -36,7 +36,7 @@ export function configureMcpServer(): void {
 **参数 (Args):**
 
 * \`project_directory\` (str, 必填): 需要用户审核的项目目录的绝对路径。
-* \`summary\` (str, 必填): 向用户展示的 AI 工作摘要。应清晰说明 AI 完成了什么，并引导用户反馈。
+* \`summary\` (str, 必填): 向用户展示的 AI 工作摘要。应清晰说明 AI 完成了什么，并引导用户反馈。内容为 Markdown 格式。
 * \`timeout\` (int, 无效值): 等待用户反馈的超时时间（秒）。默认值: ${DEFAULT_TIMEOUT}。
 
 **用户交互流程:**
@@ -47,7 +47,7 @@ export function configureMcpServer(): void {
 一个包含用户所有反馈的列表 (List)。每个元素都是一个对象，如 \`{ type: "text", text: "..." }\` 或 \`{ type: "image", data: "..." }\`。超时或无反馈则返回空列表 \`{type: "text", text: "用户未提供反馈"}\`。
 `,
             inputSchema: {
-                summary: z.string().describe("向用户展示的 AI 工作摘要。应清晰说明 AI 完成了什么，并引导用户反馈。"),
+                summary: z.string().describe("向用户展示的 AI 工作摘要。应清晰说明 AI 完成了什么，并引导用户反馈。内容为 Markdown 格式。"),
                 project_directory: z.string().describe("需要用户审核的项目目录的绝对路径。"),
                 timeout: z.number().optional().describe(`等待用户反馈的超时时间（秒）。默认值: ${DEFAULT_TIMEOUT}。`).default(DEFAULT_TIMEOUT)
             },

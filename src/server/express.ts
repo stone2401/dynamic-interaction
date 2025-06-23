@@ -6,6 +6,7 @@ import express from 'express';
 import http from 'http';
 import path from 'path';
 import { PORT } from '../config';
+import { logger } from '../logger';
 
 // 创建 Express 应用实例
 export const app = express();
@@ -16,6 +17,7 @@ export const server = http.createServer(app);
  */
 export function configureExpress(): void {
   // 提供静态文件服务
+  logger.info(`提供静态文件服务: ${path.join(__dirname, '..', 'public')}`)
   app.use(express.static(path.join(__dirname, '..', 'public')));
 }
 
@@ -26,7 +28,7 @@ export function configureExpress(): void {
 export async function startExpressServer(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     server.listen(PORT, () => {
-      console.log(`服务器已启动，监听地址: http://localhost:${PORT}`);
+      logger.info(`服务器已启动，监听地址: http://localhost:${PORT}`);
       resolve();
     });
     server.on('error', reject);

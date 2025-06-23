@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP - Agent Interaction Panel</title>
+    <style>
+        /* --- CSS Reset & Global Styles --- */
+        :root {
+            --bg-main: #1C1C1E;
+            /* 主背景色 */
+            --bg-content: #2C2C2E;
+            /* 内容区域背景色 */
+            --bg-panel: #3A3A3C;
+            /* 面板、输入框背景色 */
+            --border-color: #4A4A4C;
+            /* 边框颜色 */
+            --text-primary: #F2F2F7;
+            /* 主要文字颜色 */
+            --text-secondary: #AEAEB2;
+            /* 次要、提示文字颜色 */
+            --accent-blue: #0A84FF;
+            /* 强调色 - 蓝色 */
+            --accent-blue-hover: #359BFF;
+        }
+
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            font-family: "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- Layout --- */
+        .mcp-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        .mcp-container {
+            width: 100%;
+            max-width: 1100px;
+            /* 给予更宽的布局 */
+            background-color: var(--bg-content);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mcp-grid {
+            display: grid;
+            /* 两列布局，右侧稍宽 */
+            grid-template-columns: 1fr 1.2fr;
+            gap: 1px;
+            /* 使用1px的间隙创建分割线效果 */
+            background-color: var(--border-color);
+        }
+
+        /* --- Panel Styles --- */
+        .panel {
+            background-color: var(--bg-content);
+            padding: 32px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+        }
+
+        .panel-header .icon {
+            font-size: 20px;
+            margin-right: 12px;
+            color: var(--accent-blue);
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        /* --- Left Panel: AI Task --- */
+        #ai-task-panel .message-content {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        #ai-task-panel .message-content strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* --- Right Panel: User Feedback --- */
+        .feedback-section {
+            margin-bottom: 28px;
+        }
+
+        .feedback-section-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        #userInput {
+            width: 100%;
+            box-sizing: border-box;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 15px;
+            padding: 14px;
+            min-height: 120px;
+            resize: vertical;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        #userInput:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.3);
+        }
+
+        .input-hints {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 12px;
+        }
+
+        .input-hints code {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            color: var(--text-secondary);
+            transition: border-color 0.2s, background-color 0.2s;
+            cursor: pointer;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--accent-blue);
+            background-color: rgba(10, 132, 255, 0.1);
+        }
+
+        .file-upload-area .upload-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        /* --- Footer & Actions --- */
+        .mcp-footer {
+            grid-column: 1 / -1;
+            /* 让 footer 横跨两列 */
+            background-color: var(--bg-main);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mcp-button {
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: 500;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .mcp-button:active {
+            transform: scale(0.97);
+        }
+
+        #sendButton {
+            background-color: var(--accent-blue);
+            color: #fff;
+        }
+
+        #sendButton:hover {
+            background-color: var(--accent-blue-hover);
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 800px) {
+            .mcp-grid {
+                grid-template-columns: 1fr;
+                /* 单列布局 */
+            }
+
+            .panel {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="mcp-wrapper">
+        <div class="mcp-container">
+            <div class="mcp-grid">
+                <div id="ai-task-panel" class="panel">
+                    <div class="panel-header">
+                        <span class="icon">💡</span>
+                        <h2 class="panel-title">AI 工作摘要</h2>
+                    </div>
+                    <div class="message-content">
+                        我已根据您之前的需求“<strong>模仿苹果官网风格设计UI</strong>”，提供了两个版本的HTML。
+                        <br><br>
+                        现在，我收到了一个新的设计灵感（一个深色主题的界面截图），并准备根据这个新方向进行第三次设计。
+                        <br><br>
+                        <strong>当前问题:</strong>
+                        <p>我需要确认，接下来的设计是否应该完全采纳新灵感中的深色、仪表盘风格？或者您希望我在融合两种风格时有所侧重？</p>
+                    </div>
+                </div>
+
+                <div id="user-feedback-panel" class="panel">
+                    <div class="panel-header">
+                        <span class="icon">➤</span>
+                        <h2 class="panel-title">提供反馈</h2>
+                    </div>
+
+                    <div class="feedback-section">
+                        <h3 class="feedback-section-title">文字反馈</h3>
+                        <textarea id="userInput" rows="6" placeholder="请在这里输入您的指示或回复..."></textarea>
+                        <div class="input-hints">
+                            <p>小提示：<br>
+                                • 按 <code>Ctrl+Enter</code> (或 <code>Cmd+Enter</code>) 可快速提交<br>
+                                • 支持 <code>Ctrl+V</code> (或 <code>Cmd+V</code>) 粘贴图片</p>
+                        </div>
+                    </div>
+
+                    <div class="feedback-section">
+                        <h3 class="feedback-section-title">图片附件 (可选)</h3>
+                        <div class="file-upload-area">
+                            <div class="upload-icon">📎</div>
+                            <div>点击选择或拖拽图片到此处</div>
+                            <small>支持 PNG, JPG, GIF, WebP 等格式</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mcp-footer">
+                <button id="sendButton" class="mcp-button">提交反馈</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Basic interactivity
+        const userInput = document.getElementById('userInput');
+
+        // 快捷键提交
+        userInput.addEventListener('keydown', function (event) {
+            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                console.log("快捷键提交:", userInput.value);
+                document.getElementById('sendButton').click();
+            }
+        });
+
+        // 按钮点击
+        document.getElementById('sendButton').addEventListener('click', () => {
+            if (userInput.value.trim() === '') {
+                alert("反馈内容不能为空。");
+                return;
+            }
+            console.log("用户提交了反馈:", userInput.value);
+            // 在此添加将数据发送回后端的逻辑 (e.g., fetch API)
+            alert("反馈已提交！");
+        });
+    </script>
+</body>
+
+</html>
