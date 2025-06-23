@@ -1,31 +1,20 @@
-/* 主样式文件 - 导入其他样式模块 */
-@import 'layout.css';
-@import 'components.css';
+/* 主样式文件 - 导入所有样式模块 */
 
-/* 全局样式和重置 */
-* {
-    box-sizing: border-box;
-}
+/* 基础样式 */
+@import 'base/reset.css';
+@import 'base/base.css';
+@import 'base/accessibility.css';
+@import 'base/print.css';
 
-body, h1, h2, h3, h4, h5, h6, p, ul, ol {
-    margin: 0;
-    padding: 0;
-}
+/* 布局样式 */
+@import 'layout/layout.css';
+@import 'layout/responsive.css';
 
-/* 可访问性增强 */
-:focus {
-    outline: 2px solid rgba(0, 123, 255, 0.5);
-    outline-offset: 2px;
-}
-
-/* 打印样式 */
-@media print {
-    .main-layout-container {
-        box-shadow: none;
-        width: 100%;
-    }
-    
-    button, .tab {
-        display: none;
-    }
-}
+/* 组件样式 */
+@import 'components/panel.css';
+@import 'components/form.css';
+@import 'components/button.css';
+@import 'components/modal.css';
+@import 'components/attachment.css';
+@import 'components/hints.css';
+@import 'components/list.css';

@@ -1,0 +1,5 @@
+/* base/accessibility.css */
+:focus {
+    outline: 2px solid rgba(0, 123, 255, 0.5);
+    outline-offset: 2px;
+}

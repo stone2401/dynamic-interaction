@@ -1,0 +1,11 @@
+/* base/print.css */
+@media print {
+    .main-layout-container {
+        box-shadow: none;
+        width: 100%;
+    }
+    
+    button, .tab {
+        display: none;
+    }
+}

@@ -1,0 +1,38 @@
+/* layout/responsive.css */
+@media (max-width: 1024px) {
+    .main-container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    body {
+        align-items: flex-start;
+    }
+    
+    .content-wrapper {
+        flex-direction: column;
+    }
+
+    #summary-panel {
+        border-right: none;
+        border-bottom: 1px solid #d2d2d7;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-layout-container {
+        width: 100%;
+        margin: 0;
+        border-radius: 0;
+        border: none;
+    }
+
+    .app-header {
+        padding: 8px 15px;
+    }
+
+    #summary-panel,
+    #interaction-panel {
+        padding: 1em 1.5em;
+    }
+}
