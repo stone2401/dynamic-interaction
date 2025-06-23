@@ -55,7 +55,8 @@
     width: 14px;
     height: 14px;
     stroke-width: 2;
-    color: currentColor; /* Inherit color from parent */
+    color: currentColor;
+    /* Inherit color from parent */
     opacity: 0.7;
 }
 
@@ -88,9 +89,12 @@
 
 .status-item.connection {
     font-weight: 500;
+    padding-left: 6px;
 }
 
 .status-pulse {
+    position: relative;
+    z-index: 2;
     display: inline-block;
     width: 8px;
     height: 8px;
@@ -118,12 +122,12 @@
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7);
     }
-    
+
     70% {
         transform: scale(1);
         box-shadow: 0 0 0 8px rgba(52, 199, 89, 0);
     }
-    
+
     100% {
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(52, 199, 89, 0);
@@ -156,7 +160,8 @@
     cursor: pointer;
     border-radius: 6px;
     padding: 4px;
-    margin: -4px; /* Offset padding to maintain alignment */
+    margin: -4px;
+    /* Offset padding to maintain alignment */
     transition: background-color 0.2s ease;
 }
 
@@ -187,7 +192,7 @@
         height: auto;
         padding: 8px 12px;
     }
-    
+
     .status-bar-section {
         flex-wrap: wrap;
         gap: 12px;
@@ -195,7 +200,7 @@
         justify-content: flex-start;
         margin-bottom: 4px;
     }
-    
+
     .status-item {
         max-width: none;
     }
@@ -206,21 +211,21 @@
         font-size: 11px;
         padding: 6px 10px;
     }
-    
+
     .status-bar-section {
         gap: 10px;
     }
-    
+
     .status-item .label {
         display: none;
     }
-    
+
     .status-pulse {
         width: 6px;
         height: 6px;
         margin-right: 4px;
     }
-    
+
     .latency-value {
         font-size: 10px;
     }
@@ -233,11 +238,11 @@
         border: 1px solid rgba(0, 0, 0, 0.1);
         color: #1d1d1f;
     }
-    
+
     .status-item .value {
         color: #1d1d1f;
     }
-    
+
     .status-item .label {
         color: #86868b;
     }

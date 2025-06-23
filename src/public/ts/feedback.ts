@@ -29,21 +29,30 @@ function sendCompositeFeedback(): boolean {
     // 更新状态为发送中
     updateMessageStatus('sending');
 
+    // 在发送前立即清空输入框和预览，提供即时反馈
+    const feedbackData = {
+        text: text,
+        images: [...attachedImageData]
+    };
+
+    feedbackInput.innerText = '';
+    clearPreview();
+
+    // 更新状态为等待中
+    updateMessageStatus('waiting');
+
     // 发送反馈到服务器
-    const success = sendFeedback(text, attachedImageData as CustomImageData[]);
+    const success = sendFeedback(feedbackData.text, feedbackData.images as CustomImageData[]);
 
     if (success) {
         resultsDiv.textContent = '反馈已发送';
-        
-        // 更新状态为等待中
-        updateMessageStatus('waiting');
-
-        // 清空反馈输入框和图片预览
-        feedbackInput.innerText = '';
-        clearPreview();
     } else {
-        // 发送失败时恢复状态
+        // 发送失败时恢复状态，并提示用户
+        resultsDiv.textContent = '发送失败，请检查连接';
         updateMessageStatus('idle');
+        // 可选择是否恢复用户输入的内容
+        // feedbackInput.innerText = feedbackData.text;
+        // restoreImages(feedbackData.images);
     }
 
     return success;
