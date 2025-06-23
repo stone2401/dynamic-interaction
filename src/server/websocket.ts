@@ -49,6 +49,12 @@ function checkQueueAndProcess(): void {
 
     // 将会话与此WebSocket关联
     sessionRequest.ws = ws;
+    
+    // 发送系统信息
+    sendSystemInfo(ws, sessionRequest);
+
+    // 发送ping请求，用于计算延迟
+    ws.send(JSON.stringify({ type: 'ping', data: { timestamp: Date.now() } }));
 
     // 设置会话处理逻辑
     setupWebSocketSessionHandlers(ws, sessionRequest);
@@ -65,6 +71,21 @@ function setupWebSocketSessionHandlers(ws: WebSocket, sessionRequest: PendingSes
             switch (parsedMessage.type) {
                 case 'client_ready':
                     logger.info(`客户端准备就绪，确认摘要已显示 (会话 ID: ${sessionRequest.id})`);
+                    break;
+                    
+                case 'ping':
+                    // 处理ping请求，返回pong响应
+                    ws.send(JSON.stringify({ 
+                        type: 'pong',
+                        data: { 
+                            timestamp: parsedMessage.data?.timestamp || Date.now() 
+                        }
+                    }));
+                    break;
+                
+                case 'get_system_info':
+                    // 发送系统信息
+                    sendSystemInfo(ws, sessionRequest);
                     break;
 
                 case 'command':
@@ -143,6 +164,25 @@ function setupWebSocketSessionHandlers(ws: WebSocket, sessionRequest: PendingSes
 
     ws.on('close', closeHandler);
     ws.on('error', errorHandler);
+}
+
+/**
+ * 发送系统信息到客户端
+ * @param ws WebSocket连接
+ * @param sessionRequest 会话请求
+ */
+function sendSystemInfo(ws: WebSocket, sessionRequest: PendingSessionRequest): void {
+    // 获取当前工作目录（项目根目录）
+    const projectRoot = process.cwd();
+    
+    ws.send(JSON.stringify({
+        type: 'system_info',
+        data: {
+            workspaceDirectory: sessionRequest.projectDirectory || projectRoot,
+            sessionId: sessionRequest.id,
+            serverVersion: process.env.npm_package_version || '1.0.0'
+        }
+    }));
 }
 
 export function configureWebSocketServer(): void {

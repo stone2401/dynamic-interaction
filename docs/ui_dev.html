@@ -4,272 +4,290 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCP 进阶界面设计</title>
+    <title>AI 助手界面 (融合版)</title>
     <style>
-        body {
-            background-color: #1E1E1E;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
-            color: #E0E0E0;
-            margin: 0;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+        /* --- 1. 全局样式与变量定义 --- */
+        :root {
+            --background-color: #1a1a1c;
+            --panel-background-color: #262628;
+            --border-color: rgba(84, 84, 88, 0.5);
+            --accent-color: #0a84ff;
+            --accent-color-hover: #359aff;
+
+            --text-primary: #f2f2f7;
+            --text-secondary: #a0a0a5;
+            --text-tertiary: #6c6c70;
+
+            --status-green: #30d158;
+            --status-orange: #ff9f0a;
+            --status-red: #ff453a;
+
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Helvetica Neue", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            --border-radius: 16px;
         }
 
-        .page-container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 24px;
+        /* --- 2. 基础重置 --- */
+        * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
 
-        /* --- 新增：全局标题与状态栏 --- */
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            padding: 0 8px;
-            /* 轻微内边距，使其与下方卡片对齐 */
+        html,
+        body {
+            height: 100%;
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            overflow: hidden;
         }
 
-        .page-title {
-            font-size: 22px;
-            font-weight: 600;
-        }
-
-        .global-status {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            /* 加大间距，让信息分区更明显 */
-        }
-
-        .global-status .interaction-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-
-        .global-status .session-id {
-            font-size: 13px;
-            color: #9E9E9E;
-            cursor: pointer;
-        }
-
-        .global-status .session-id .label {
-            color: #757575;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .status-dot.completed {
-            background-color: #4CAF50;
-        }
-
-        .status-dot.awaiting {
-            background-color: #FF9800;
-        }
-
-        .status-dot.processing {
-            background-color: #2196F3;
-            animation: breathing 2s ease-in-out infinite;
-        }
-
-        @keyframes breathing {
-
-            0%,
-            100% {
-                transform: scale(0.8);
-                opacity: 0.7;
-            }
-
-            50% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        /* --- 主内容区布局 --- */
+        /* --- 3. 主要布局 --- */
         .main-content {
             display: flex;
-            gap: 24px;
+            height: 100vh;
+            gap: 16px;
+            padding: 16px;
         }
 
-        .card {
-            background-color: #2D2D2D;
-            border-radius: 16px;
+        .panel {
+            background-color: var(--panel-background-color);
+            border-radius: var(--border-radius);
             padding: 24px;
-            flex: 1;
+            width: 50%;
             display: flex;
             flex-direction: column;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow-y: auto;
         }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
+        /* 隐藏滚动条 */
+        .panel::-webkit-scrollbar {
+            display: none;
         }
 
-        .card-title {
-            font-size: 18px;
+        .panel {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+
+        /* --- 4. 左侧面板样式 --- */
+        .panel-header-info {
+            flex-shrink: 0;
+            font-size: 0.8em;
+            color: var(--text-tertiary);
+            margin-bottom: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ai-output-placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* --- 5. 右侧交互面板样式 (恢复自第一版) --- */
+        .user-input {
+            gap: 20px;
+        }
+
+        .input-header {
+            font-size: 1.2em;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 0;
+            color: var(--text-primary);
+            flex-shrink: 0;
         }
 
-        /* --- 左侧卡片 --- */
-        .ai-summary .warning-text {
-            color: #E57373;
-            font-size: 14px;
-            margin-top: 16px;
-        }
-
-        /* --- 右侧卡片 --- */
-        .feedback-form {
+        .input-wrapper {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            flex-grow: 1;
+            /* 占据剩余空间 */
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
-        /* 优化的提交按钮 */
+        .input-wrapper:focus-within {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.3);
+        }
+
+        .text-input-area {
+            width: 100%;
+            flex-grow: 1;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            font-size: 1em;
+            line-height: 1.6;
+            resize: none;
+        }
+
+        .text-input-area:focus {
+            outline: none;
+        }
+
+        .input-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding-top: 12px;
+            margin-top: auto;
+        }
+
         .submit-button {
-            background-color: #0A84FF;
+            background-color: var(--accent-color);
             color: white;
             border: none;
-            border-radius: 8px;
-            padding: 8px 16px;
-            /* 调整为更精炼的尺寸 */
-            font-size: 14px;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.9em;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.3s, opacity 0.3s;
+            transition: background-color 0.2s;
         }
 
         .submit-button:hover {
-            background-color: #359DFF;
+            background-color: var(--accent-color-hover);
         }
 
         .submit-button:disabled {
             background-color: #555;
-            opacity: 0.5;
+            color: #999;
             cursor: not-allowed;
         }
 
-        .feedback-textarea {
-            background-color: #3C3C3C;
-            border: 1px solid #4A4A4A;
-            border-radius: 8px;
-            width: 100%;
-            height: 120px;
-            resize: vertical;
-            padding: 12px;
-            color: #E0E0E0;
-            font-size: 14px;
-            box-sizing: border-box;
-            margin-top: 16px;
-            /* 从标题和按钮下来一点距离 */
-        }
-
-        .feedback-textarea::placeholder {
-            color: #757575;
-        }
-
-        .textarea-hints {
-            font-size: 12px;
-            color: #9E9E9E;
-            margin: 8px 0 24px 0;
-        }
-
-        .file-upload-area {
-            border: 2px dashed #4A4A4A;
+        .file-attachment {
+            flex-shrink: 0;
+            border: 2px dashed var(--border-color);
             border-radius: 12px;
-            padding: 40px;
+            padding: 30px;
             text-align: center;
-            color: #9E9E9E;
-            cursor: pointer;
+            color: var(--text-secondary);
             transition: border-color 0.3s, background-color 0.3s;
-            margin-top: auto;
-            /* 自动撑开，填满剩余空间 */
+            cursor: pointer;
         }
 
-        .file-upload-area:hover {
-            border-color: #64B5F6;
-            background-color: #333333;
+        .file-attachment:hover {
+            border-color: var(--accent-color);
+            background-color: rgba(10, 132, 255, 0.1);
+        }
+
+        .file-attachment-icon {
+            width: 28px;
+            height: 28px;
+            margin: 0 auto 12px auto;
+            stroke: var(--text-secondary);
+        }
+
+        .file-attachment span {
+            display: block;
+            font-size: 0.9em;
+        }
+
+        .file-attachment .formats {
+            font-size: 0.8em;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        /* --- 6. 全局悬浮状态指示器 --- */
+        .connection-status-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--status-green);
+            /* 默认绿色 */
+            box-shadow: 0 0 0 4px var(--panel-background-color);
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .connection-status-indicator.orange {
+            background-color: var(--status-orange);
+        }
+
+        .connection-status-indicator.red {
+            background-color: var(--status-red);
+        }
+
+        .connection-status-indicator .tooltip {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: 100%;
+            right: 50%;
+            transform: translateX(50%);
+            margin-bottom: 10px;
+            background-color: #333;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            white-space: nowrap;
+            transition: opacity 0.2s, visibility 0.2s;
+            pointer-events: none;
+        }
+
+        .connection-status-indicator:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="page-container">
+    <main class="main-content">
+        <section class="panel">
+            <div class="panel-header-info">
+                项目: AlphaGo / src / modules ・ 会话ID: a1b2-c3d4
+            </div>
+            <p class="ai-output-placeholder">AI 的分析和摘要内容将显示在这里...</p>
+        </section>
 
-        <header class="page-header">
-            <div class="page-title">工作区</div>
-            <div class="global-status">
-                <div class="interaction-status">
-                    <div class="status-dot processing"></div>
-                    <span>AI 正在处理...</span>
-                </div>
-                <div class="session-id" title="点击复制">
-                    <span class="label">ID:</span>
-                    <span>2c5a9b1f-3e7d-4b8c-9a0f-1e2d3f4a5b6c</span>
+        <section class="panel user-input">
+            <div class="input-header">对话</div>
+
+            <div class="input-wrapper">
+                <textarea class="text-input-area" placeholder="请在这里输入您的指示或回复..."></textarea>
+                <div class="input-footer">
+                    <button class="submit-button" disabled>提交</button>
                 </div>
             </div>
-        </header>
 
-        <main class="main-content">
-            <section class="card ai-summary">
-                <div class="card-header">
-                    <h2 class="card-title">💡 AI 工作摘要</h2>
-                </div>
-                <hr style="border-color: rgba(255, 255, 255, 0.1); border-style: solid; margin:0;">
-                <p class="warning-text">
-                    WebSocket 连接已关闭，请刷新页面重新连接。
-                </p>
-            </section>
+            <div class="file-attachment">
+                <svg class="file-attachment-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3.375 3.375 0 0 1 19.5 7.5h0a3.375 3.375 0 0 1-2.475 5.839c-.896.247-1.783.52-2.658.823L9.75 16.5l-2.475-2.475m0 0a3.375 3.375 0 0 1 5.839-2.475M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+                <span>点击选择或拖拽图片到此处</span>
+                <span class="formats">支持 PNG, JPG, GIF, WebP 等格式</span>
+            </div>
+        </section>
+    </main>
 
-            <section class="card">
-                <form class="feedback-form">
-                    <div class="card-header">
-                        <h2 class="card-title">▶️ 提供反馈</h2>
-                        <button type="submit" class="submit-button" disabled>提交</button>
-                    </div>
-                    <hr style="border-color: rgba(255, 255, 255, 0.1); border-style: solid; margin:0;">
-
-                    <label for="feedback-text" class="sr-only">文字反馈</label>
-                    <textarea id="feedback-text" class="feedback-textarea" placeholder="请在这里输入您的指示或回复..."></textarea>
-                    <p class="textarea-hints">小提示：按 Ctrl+Enter (或 Cmd+Enter) 可快速提交 · 支持 Ctrl+V (或 Cmd+V) 粘贴图片</p>
-
-                    <label for="file-upload" class="sr-only">图片附件</label>
-                    <div class="file-upload-area" id="file-upload">
-                        <div>📎 点击选择或拖拽图片到此处</div>
-                        <div style="font-size: 12px; color: #757575; margin-top: 4px;">支持 PNG, JPG, GIF, WebP 等格式</div>
-                    </div>
-                </form>
-            </section>
-        </main>
+    <div class="connection-status-indicator" title="点击查看详情">
+        <div class="tooltip">已连接 | 28ms</div>
     </div>
 
     <script>
-        const feedbackText = document.getElementById('feedback-text');
+        const textarea = document.querySelector('.text-input-area');
         const submitButton = document.querySelector('.submit-button');
-        feedbackText.addEventListener('input', () => {
-            if (feedbackText.value.trim() !== '') {
-                submitButton.disabled = false;
-            } else {
-                submitButton.disabled = true;
-            }
-        });
+
+        function updateButtonState() {
+            submitButton.disabled = textarea.value.trim() === '';
+        }
+
+        updateButtonState();
+        textarea.addEventListener('input', updateButtonState);
     </script>
 </body>
 

@@ -5,6 +5,7 @@
 
 // 导入模块
 import { sendCompositeFeedback } from './feedback.js';
+import { initializeThemeSwitcher } from './theme.js';
 import { processFiles, clearPreview, setupDragAndDrop, setupPasteListener } from './imageHandler.js';
 
 // 告诉 TypeScript marked 是一个全局变量 (从CDN加载)
@@ -31,7 +32,10 @@ window.clearPreview = clearPreview;
  * 初始化应用程序
  */
 function initializeApp(): void {
-  console.log('应用程序初始化中...');
+    console.log('应用程序初始化中...');
+
+  // 初始化主题切换器
+  initializeThemeSwitcher();
 
   // --- START: MOCK DATA FOR MARKDOWN PREVIEW ---
   const summaryDiv = document.getElementById('summary') as HTMLDivElement;

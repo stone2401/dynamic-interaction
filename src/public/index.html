@@ -9,26 +9,60 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
-      // 配置 marked 使用 highlight.js 进行代码高亮
-      marked.setOptions({
-        highlight: function(code, lang) {
-          const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-          return hljs.highlight(code, { language }).value;
-        },
-        langPrefix: 'hljs language-',
-        breaks: true,
-        gfm: true
-      });
+        // 配置 marked 使用 highlight.js 进行代码高亮
+        marked.setOptions({
+            highlight: function (code, lang) {
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return hljs.highlight(code, { language }).value;
+            },
+            langPrefix: 'hljs language-',
+            breaks: true,
+            gfm: true
+        });
     </script>
 </head>
 
 <body>
+    <!-- 状态栏 - 苹果风格设计 (内容区顶部) -->
+    <div class="status-bar-container">
+        <div class="status-bar integrated">
+            <div class="status-bar-section">
+                <div class="status-item">
+                    <i data-lucide="folder-open" class="icon"></i>
+                    <span class="label">工作区：</span>
+                    <span id="workspace-directory-value" class="value">加载中...</span>
+                </div>
+                <div class="status-item">
+                    <i data-lucide="key-round" class="icon"></i>
+                    <span class="label">会话ID：</span>
+                    <span id="session-id-value" class="value">加载中...</span>
+                </div>
+            </div>
+            <div class="status-bar-section">
+                <div class="status-item connection">
+                    <span id="status-pulse" class="status-pulse disconnected"></span>
+                    <span id="connection-status-value">未连接</span>
+                    <span class="latency">(<span id="latency-value" class="latency-value">--</span>)</span>
+                </div>
+                <div class="status-item message-status">
+                    <i data-lucide="message-circle" class="icon"></i>
+                    <span id="message-status-value">暂无新消息</span>
+                </div>
+                <div class="status-item theme-switcher" id="theme-switcher" title="切换主题">
+                    <i data-lucide="sun" class="icon theme-icon-sun"></i>
+                    <i data-lucide="moon" class="icon theme-icon-moon" style="display: none;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="main-container">
         <!-- AI 工作摘要 -->
         <div id="summary-panel" class="panel">
             <h2>
-                <span class="icon">💡</span> AI 工作摘要
+                <i data-lucide="lightbulb" class="icon"></i> AI 工作摘要
             </h2>
             <hr>
             <div id="summary"> - 我已根据您之前的需求“模仿苹果官网风格设计UI”，提供了两个版本的HTML...</div>
@@ -38,7 +72,7 @@
         <div id="interaction-panel" class="panel">
             <div class="panel-header">
                 <h2>
-                    <span class="icon">▶️</span> 提供反馈
+                    <i data-lucide="corner-down-left" class="icon"></i> 提供反馈
                 </h2>
                 <button id="send-feedback-btn">提交反馈</button>
             </div>
@@ -61,7 +95,7 @@
                 <label>图片附件 (可选)</label>
                 <div id="drop-zone">
                     <div class="drop-zone-text">
-                        <span class="icon">📎</span>
+                        <i data-lucide="paperclip" class="icon"></i>
                         <p>点击选择或拖拽图片到此处</p>
                         <span>支持 PNG, JPG, GIF, WebP 等格式</span>
                     </div>
@@ -74,9 +108,13 @@
 
     <!-- 脚本和模态框 -->
     <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/statusBar.js"></script>
     <div id="image-modal" class="modal">
         <img class="modal-content" id="modal-image">
     </div>
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 
 </html>

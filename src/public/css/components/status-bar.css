@@ -1,0 +1,244 @@
+/* 状态栏样式 - 苹果风格设计（内容区顶部集成版） */
+
+.status-bar-container {
+    width: 100%;
+    max-width: 1350px;
+    box-sizing: border-box;
+}
+
+.status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #e0e0e0;
+    height: 36px;
+    transition: all 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    letter-spacing: -0.01em;
+}
+
+.status-bar.integrated {
+    background-color: rgba(50, 50, 54, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 12px;
+    padding: 8px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.status-bar-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.status-item:hover {
+    transform: translateY(-1px);
+    opacity: 0.9;
+}
+
+.status-item .icon {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2;
+    color: currentColor; /* Inherit color from parent */
+    opacity: 0.7;
+}
+
+.status-item .label {
+    color: #a0a0a5;
+    font-weight: 500;
+    font-size: 11px;
+}
+
+.status-item .value {
+    color: #f5f5f7;
+    font-weight: 500;
+}
+
+.status-item.connection {
+    transition: color 0.3s ease;
+}
+
+.status-item.connection.connected {
+    color: #34c759;
+}
+
+.status-item.connection.disconnected {
+    color: #ff3b30;
+}
+
+.status-item.connection.high-latency {
+    color: #ff9500;
+}
+
+.status-item.connection {
+    font-weight: 500;
+}
+
+.status-pulse {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 0 rgba(52, 199, 89, 0.4);
+}
+
+.status-pulse.connected {
+    background-color: #34c759;
+}
+
+.status-pulse.disconnected {
+    background-color: #ff3b30;
+    animation: none;
+}
+
+.status-pulse.high-latency {
+    background-color: #ff9500;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7);
+    }
+    
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 8px rgba(52, 199, 89, 0);
+    }
+    
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(52, 199, 89, 0);
+    }
+}
+
+.latency-value {
+    font-weight: 600;
+    transition: color 0.3s ease;
+    font-variant-numeric: tabular-nums;
+}
+
+.latency-value.normal {
+    color: #34c759;
+}
+
+.latency-value.medium {
+    color: #ff9500;
+}
+
+.latency-value.high {
+    color: #ff3b30;
+}
+
+.status-item.message-status {
+    transition: all 0.3s ease;
+}
+
+.theme-switcher {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 4px;
+    margin: -4px; /* Offset padding to maintain alignment */
+    transition: background-color 0.2s ease;
+}
+
+.theme-switcher:hover {
+    background-color: rgba(120, 120, 128, 0.16);
+}
+
+.message-status.idle {
+    color: #86868b;
+}
+
+.message-status.sending {
+    color: #007aff;
+}
+
+.message-status.received {
+    color: #34c759;
+}
+
+.message-status.waiting {
+    color: #ff9500;
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 768px) {
+    .status-bar.integrated {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 8px 12px;
+    }
+    
+    .status-bar-section {
+        flex-wrap: wrap;
+        gap: 12px;
+        width: 100%;
+        justify-content: flex-start;
+        margin-bottom: 4px;
+    }
+    
+    .status-item {
+        max-width: none;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .status-bar {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+    
+    .status-bar-section {
+        gap: 10px;
+    }
+    
+    .status-item .label {
+        display: none;
+    }
+    
+    .status-pulse {
+        width: 6px;
+        height: 6px;
+        margin-right: 4px;
+    }
+    
+    .latency-value {
+        font-size: 10px;
+    }
+}
+
+/* 暗黑模式已内置于默认设计（面向深色主题） */
+@media (prefers-color-scheme: light) {
+    .status-bar.integrated {
+        background-color: rgba(240, 240, 245, 0.85);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        color: #1d1d1f;
+    }
+    
+    .status-item .value {
+        color: #1d1d1f;
+    }
+    
+    .status-item .label {
+        color: #86868b;
+    }
+}

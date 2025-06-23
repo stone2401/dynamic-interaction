@@ -10,6 +10,9 @@
 @import 'layout/layout.css';
 @import 'layout/responsive.css';
 
+/* 主题样式 */
+@import 'themes/light-theme.css';
+
 /* 组件样式 */
 @import 'components/panel.css';
 @import 'components/form.css';
@@ -18,3 +21,4 @@
 @import 'components/attachment.css';
 @import 'components/hints.css';
 @import 'components/list.css';
+@import 'components/status-bar.css';

@@ -1,0 +1,90 @@
+/* /css/themes/light-theme.css */
+
+/* This file contains styles for the light theme. */
+/* These styles are applied when the body has the .light-theme class. */
+
+body.light-theme {
+    background-color: #f0f2f5; /* A softer, off-white background */
+    color: #333; /* Softer text color */
+}
+
+.light-theme .panel {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e6; /* Softer border */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Use a more specific selector to override the default panel styles */
+.light-theme .panel h2 {
+    color: #1c1e21; /* Use a dark color for headings for better readability */
+}
+
+/* Override the default HR and summary colors for the light theme */
+.light-theme .panel hr {
+    background-color: #e5e5e5;
+}
+
+.light-theme #summary {
+    color: #555;
+}
+
+/* --- Status Bar --- */
+.light-theme .status-bar.integrated {
+    background-color: rgba(249, 249, 250, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: #515154;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.light-theme .status-item .value {
+    color: #1d1d1f;
+}
+
+.light-theme .status-item .label {
+    color: #6e6e73;
+}
+
+
+/* --- Interaction Panel --- */
+.light-theme #feedback-input {
+    background-color: #f5f5f5; /* Consistent with new bg */
+    border: 1px solid #e0e0e6;
+    color: #333;
+}
+
+.light-theme #feedback-input:focus {
+    border-color: #007aff;
+    background-color: #fff;
+}
+
+.light-theme #send-feedback-btn {
+    background-color: #007aff;
+    color: #fff;
+    border: none;
+}
+
+.light-theme #send-feedback-btn:hover {
+    background-color: #0071e3;
+}
+
+.light-theme #drop-zone {
+    background-color: #f5f5f5;
+    border-color: #e0e0e6;
+}
+
+.light-theme #drop-zone:hover {
+    border-color: #007aff;
+    background-color: #e9e9f0;
+}
+
+.light-theme #drop-zone .drop-zone-text p {
+    color: #333;
+}
+
+.light-theme #drop-zone .drop-zone-text span {
+    color: #6e6e73;
+}
+
+.light-theme .hints-section ul li {
+    color: #6e6e73;
+}
