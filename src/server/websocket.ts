@@ -7,8 +7,9 @@ import { IncomingMessage } from 'http';
 import { exec } from 'child_process';
 import { server } from './express';
 import { logger } from '../logger';
-import { sessionQueue, PendingSessionRequest } from './sessionQueue';
+import { sessionQueue } from './sessionQueue';
 import { UserFeedback } from '../types/feedback';
+import { sessionManager } from './sessionManager';
 
 export const wss = new WebSocketServer({ server });
 export const activeSockets = new Set<WebSocket>();
@@ -17,223 +18,59 @@ export const activeSockets = new Set<WebSocket>();
 import { setWebSocketServer } from './websocketTransport';
 setWebSocketServer(wss);
 
-// 原_handleWebSocketConnectionLogic函数被拆分并重构为setupWebSocketSessionHandlers，已在上方实现
-
 export function requestFeedbackSession(summary: string, projectDirectory: string): Promise<UserFeedback> {
     return new Promise((resolve, reject) => {
         const requestData = { summary, projectDirectory, resolve, reject };
         sessionQueue.enqueue(requestData);
+        checkQueueAndProcess(); // 立即尝试处理
     });
 }
 
-// 添加一个函数来检查队列并分配消息给可用的WebSocket连接
 function checkQueueAndProcess(): void {
-    // 如果没有活跃的连接或队列为空，不执行任何操作
-    if (activeSockets.size === 0 || sessionQueue.isWaitingQueueEmpty()) {
-        return;
-    }
+    if (sessionQueue.isWaitingQueueEmpty()) return;
 
-    // 尝试从队列中获取一个请求
-    const sessionRequest = sessionQueue.leaseNext();
-    if (!sessionRequest) {
-        return; // 没有可用的请求
-    }
+    const availableSocket = Array.from(activeSockets).find(ws => !sessionManager.hasSession(ws));
 
-    // 从活跃连接中选择一个（这里简单地选择第一个连接）
-    const ws = Array.from(activeSockets)[0];
-
-    logger.info(`分配会话 ID: ${sessionRequest.id} 到现有WebSocket连接`);
-
-    // 发送摘要到这个连接
-    ws.send(JSON.stringify({ type: 'summary', data: sessionRequest.summary }));
-
-    // 将会话与此WebSocket关联
-    sessionRequest.ws = ws;
-    
-    // 发送系统信息
-    sendSystemInfo(ws, sessionRequest);
-
-    // 发送ping请求，用于计算延迟
-    ws.send(JSON.stringify({ type: 'ping', data: { timestamp: Date.now() } }));
-
-    // 设置会话处理逻辑
-    setupWebSocketSessionHandlers(ws, sessionRequest);
-}
-
-// 为连接设置会话处理逻辑
-function setupWebSocketSessionHandlers(ws: WebSocket, sessionRequest: PendingSessionRequest): void {
-    // 创建消息处理函数
-    const messageHandler = (message: string) => {
-        try {
-            const parsedMessage = JSON.parse(message);
-            logger.info(`服务器收到消息 (会话 ID: ${sessionRequest.id}):`, parsedMessage);
-
-            switch (parsedMessage.type) {
-                case 'client_ready':
-                    logger.info(`客户端准备就绪，确认摘要已显示 (会话 ID: ${sessionRequest.id})`);
-                    break;
-                    
-                case 'ping':
-                    // 处理ping请求，返回pong响应
-                    ws.send(JSON.stringify({ 
-                        type: 'pong',
-                        data: { 
-                            timestamp: parsedMessage.data?.timestamp || Date.now() 
-                        }
-                    }));
-                    break;
-                
-                case 'get_system_info':
-                    // 发送系统信息
-                    sendSystemInfo(ws, sessionRequest);
-                    break;
-
-                case 'command':
-                    if (typeof parsedMessage.data === 'string') {
-                        exec(parsedMessage.data, { cwd: sessionRequest.projectDirectory }, (error, stdout, stderr) => {
-                            if (error) {
-                                ws.send(JSON.stringify({ type: 'command_result', data: `错误: ${error.message}` }));
-                                return;
-                            }
-                            if (stderr) {
-                                ws.send(JSON.stringify({ type: 'command_result', data: `标准错误: ${stderr}` }));
-                                return;
-                            }
-                            ws.send(JSON.stringify({ type: 'command_result', data: stdout }));
-                        });
-                    } else {
-                        ws.send(JSON.stringify({ type: 'error', data: '无效的命令格式。' }));
-                    }
-                    break;
-
-                case 'submit_feedback':
-                    const { text, imageData } = parsedMessage.data;
-                    const collectedFeedback: UserFeedback = {
-                        text,
-                        imageData
-                    };
-
-                    logger.info(`最终反馈已提交 (会话 ID: ${sessionRequest.id}):`, collectedFeedback);
-
-                    // 解析会话Promise并确认会话完成
-                    sessionRequest.resolve(collectedFeedback);
-                    sessionQueue.acknowledge(sessionRequest.id);
-
-                    // 移除消息处理函数，准备处理下一个会话
-                    ws.removeListener('message', messageHandler);
-
-                    // 检查队列中是否有更多任务要处理
-                    process.nextTick(checkQueueAndProcess);
-                    break;
-
-                default:
-                    logger.warn(`收到未知类型的消息 (会话 ID: ${sessionRequest.id}):`, parsedMessage.type);
-                    break;
-            }
-        } catch (error) {
-            logger.error(`处理消息时出错 (会话 ID: ${sessionRequest.id}):`, error);
-            ws.send(JSON.stringify({ type: 'error', data: '无效的消息格式。' }));
+    if (availableSocket) {
+        const sessionRequest = sessionQueue.leaseNext();
+        if (sessionRequest) {
+            logger.info(`为新的WebSocket连接分配会话 ID: ${sessionRequest.id}`);
+            sessionManager.startSession(availableSocket, sessionRequest);
         }
-    };
-
-    // 添加消息处理函数
-    ws.on('message', messageHandler);
-
-    // 处理连接关闭和错误
-    const closeHandler = () => {
-        logger.info(`客户端已断开连接 (会话 ID: ${sessionRequest.id})`);
-        activeSockets.delete(ws);
-        // 移除所有特定于此会话的事件处理程序
-        ws.removeListener('message', messageHandler);
-        ws.removeListener('close', closeHandler);
-        ws.removeListener('error', errorHandler);
-        // 将任务重新排队
-        sessionQueue.requeue(sessionRequest.id, new Error('WebSocket 连接在反馈完成前关闭。'));
-    };
-
-    const errorHandler = (error: Error) => {
-        logger.error(`WebSocket 错误 (会话 ID: ${sessionRequest.id}):`, error);
-        activeSockets.delete(ws);
-        // 移除所有特定于此会话的事件处理程序
-        ws.removeListener('message', messageHandler);
-        ws.removeListener('close', closeHandler);
-        ws.removeListener('error', errorHandler);
-        // 将任务重新排队
-        sessionQueue.requeue(sessionRequest.id, error);
-    };
-
-    ws.on('close', closeHandler);
-    ws.on('error', errorHandler);
-}
-
-/**
- * 发送系统信息到客户端
- * @param ws WebSocket连接
- * @param sessionRequest 会话请求
- */
-function sendSystemInfo(ws: WebSocket, sessionRequest: PendingSessionRequest): void {
-    // 获取当前工作目录（项目根目录）
-    const projectRoot = process.cwd();
-    
-    ws.send(JSON.stringify({
-        type: 'system_info',
-        data: {
-            workspaceDirectory: sessionRequest.projectDirectory || projectRoot,
-            sessionId: sessionRequest.id,
-            serverVersion: process.env.npm_package_version || '1.0.0'
-        }
-    }));
+    }
 }
 
 export function configureWebSocketServer(): void {
     wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-        // 将新的WebSocket连接添加到活跃连接池
         activeSockets.add(ws);
         logger.info(`新的WebSocket客户端已连接，当前活跃连接数: ${activeSockets.size}`);
 
-        // 设置基本的心跳检测，保持连接活跃
         const pingInterval = setInterval(() => {
             if (ws.readyState === ws.OPEN) {
                 ws.ping();
             } else {
                 clearInterval(pingInterval);
             }
-        }, 30000); // 30秒发送一次ping
+        }, 30000);
 
-        // 处理连接关闭
         ws.on('close', () => {
             activeSockets.delete(ws);
             clearInterval(pingInterval);
             logger.info(`WebSocket客户端已断开连接，当前活跃连接数: ${activeSockets.size}`);
         });
 
-        // 处理连接错误
         ws.on('error', (error) => {
             activeSockets.delete(ws);
             clearInterval(pingInterval);
             logger.error(`WebSocket客户端连接出错:`, error);
-            logger.info(`当前活跃连接数: ${activeSockets.size}`);
         });
 
-        // 发送初始状态通知
         ws.send(JSON.stringify({ type: 'info', data: '已连接到反馈服务器，等待任务分配。' }));
 
-        // 检查是否有待处理的会话可以立即分配给这个新连接
-        const sessionRequest = sessionQueue.leaseNext();
-        if (sessionRequest) {
-            logger.info(`客户端已连接，立即分配会话 ID: ${sessionRequest.id}`);
-            ws.send(JSON.stringify({ type: 'summary', data: sessionRequest.summary }));
-            sessionRequest.ws = ws;
-            setupWebSocketSessionHandlers(ws, sessionRequest);
-        }
+        checkQueueAndProcess();
     });
 
     logger.info('WebSocket 服务器已配置并监听连接。');
 
-    // 设置定期检查队列的计时器，尝试分配消息给可用连接
-    setInterval(() => {
-        if (!sessionQueue.isWaitingQueueEmpty() && activeSockets.size > 0) {
-            checkQueueAndProcess();
-        }
-    }, 1000); // 每秒检查一次
+    setInterval(checkQueueAndProcess, 1000); // 每秒检查一次队列
 }

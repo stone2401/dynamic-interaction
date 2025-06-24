@@ -75,7 +75,9 @@ export function setupDragAndDrop(dropZone: HTMLElement, previewContainer: HTMLEl
   dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    dropZone.classList.add('dragover');
+    if (!dropZone.classList.contains('disabled')) {
+      dropZone.classList.add('dragover');
+    }
   });
 
   dropZone.addEventListener('dragleave', (e) => {
@@ -88,12 +90,14 @@ export function setupDragAndDrop(dropZone: HTMLElement, previewContainer: HTMLEl
     e.preventDefault();
     e.stopPropagation();
     dropZone.classList.remove('dragover');
+    if (dropZone.classList.contains('disabled')) return;
     if (e.dataTransfer) {
       processFiles(e.dataTransfer.files, previewContainer);
     }
   });
 
   dropZone.addEventListener('click', () => {
+    if (dropZone.classList.contains('disabled')) return;
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.multiple = true;
@@ -109,9 +113,16 @@ export function setupDragAndDrop(dropZone: HTMLElement, previewContainer: HTMLEl
 
 export function setupPasteListener(pasteTarget: HTMLElement, previewContainer: HTMLElement): void {
   pasteTarget.addEventListener('paste', (e: ClipboardEvent) => {
-    if (e.clipboardData) {
+    if (pasteTarget.classList.contains('disabled')) return;
+
+    // 检查剪贴板中是否有文件
+    if (e.clipboardData && e.clipboardData.files.length > 0) {
+      // 阻止默认的粘贴行为 (将图片插入到 contenteditable div)
+      e.preventDefault();
+      // 处理文件并显示在预览区域
       processFiles(e.clipboardData.files, previewContainer);
     }
+    // 如果剪贴板中是文本，则不执行任何操作，允许默认的文本粘贴行为
   });
 }
 

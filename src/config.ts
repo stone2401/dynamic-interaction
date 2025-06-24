@@ -14,9 +14,6 @@ export const MCP_CONFIG = {
     version: "1.0.0",
 };
 
-// 默认超时设置（秒） - 这看起来是 MCP 工具的默认超时，与 WebSocket 会话超时不同
-export const DEFAULT_TIMEOUT = 600;
-
 // 新增：WebSocket 会话等待客户端连接的超时时间（秒）
 export const WEBSOCKET_SESSION_TIMEOUT_SECONDS = Number(process.env.WEBSOCKET_SESSION_TIMEOUT_SECONDS) || 30;
 

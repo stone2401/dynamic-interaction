@@ -34,6 +34,10 @@
     gap: 20px;
 }
 
+.status-item.session-timer {
+    display: none; /* 默认隐藏，由JS控制显示 */
+}
+
 .status-item {
     display: flex;
     align-items: center;
@@ -219,6 +223,12 @@
         transform: scale(1);
         box-shadow: none;
     }
+}
+
+/* 会话倒计时居中区域 */
+.status-bar-section.center-section {
+    flex: 1;
+    justify-content: center;
 }
 
 /* 响应式调整 */

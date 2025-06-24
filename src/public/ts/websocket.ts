@@ -17,6 +17,7 @@ interface SystemInfo {
   workspaceDirectory: string;
   sessionId: string;
   serverVersion?: string;
+  leaseTimeoutSeconds?: number;
 }
 
 // 创建 WebSocket 连接
@@ -88,7 +89,11 @@ ws.onmessage = (event: MessageEvent) => {
       case 'system_info':
         // 处理系统信息
         if (window.statusBar && data.data) {
-          window.statusBar.updateSystemInfo(data.data as SystemInfo);
+          const sysInfo = data.data as SystemInfo;
+          window.statusBar.updateSystemInfo(sysInfo);
+          if (sysInfo.leaseTimeoutSeconds && sysInfo.leaseTimeoutSeconds > 0) {
+            window.statusBar.startSessionTimer(sysInfo.leaseTimeoutSeconds);
+          }
         }
         break;
         
@@ -118,6 +123,7 @@ ws.onclose = () => {
   // 更新连接状态
   if (window.statusBar) {
     window.statusBar.updateConnectionStatus('disconnected');
+    window.statusBar.stopSessionTimer();
   }
 };
 

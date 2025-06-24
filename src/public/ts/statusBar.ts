@@ -65,13 +65,13 @@ export function initializeStatusBar(): void {
  */
 export function updateSystemInfo(info: SystemInfo): void {
     systemInfo = { ...systemInfo, ...info };
-    
+
     if (workspaceDirectoryElement) {
         workspaceDirectoryElement.textContent = systemInfo.workspaceDirectory;
         // 添加工具提示，鼠标悬停时显示完整路径
         workspaceDirectoryElement.title = systemInfo.workspaceDirectory;
     }
-    
+
     if (sessionIdElement) {
         sessionIdElement.textContent = systemInfo.sessionId;
     }
@@ -82,16 +82,16 @@ export function updateSystemInfo(info: SystemInfo): void {
  */
 export function updateConnectionStatus(status: ConnectionStatus): void {
     connectionStatus = status;
-    
+
     if (connectionStatusElement) {
         // 移除所有状态类
         connectionStatusElement.classList.remove('connected', 'disconnected', 'high-latency');
         statusPulseElement.classList.remove('connected', 'disconnected', 'high-latency');
-        
+
         // 添加当前状态类
         connectionStatusElement.classList.add(status);
         statusPulseElement.classList.add(status);
-        
+
         // 更新显示文本
         switch (status) {
             case 'connected':
@@ -112,11 +112,11 @@ export function updateConnectionStatus(status: ConnectionStatus): void {
  */
 export function updateLatency(latency: number): void {
     currentLatency = latency;
-    
+
     if (latencyValueElement) {
         // 移除所有状态类
         latencyValueElement.classList.remove('normal', 'medium', 'high');
-        
+
         // 添加当前状态类并更新文本
         if (latency < LATENCY_THRESHOLD.NORMAL) {
             latencyValueElement.classList.add('normal');
@@ -125,9 +125,9 @@ export function updateLatency(latency: number): void {
         } else {
             latencyValueElement.classList.add('high');
         }
-        
+
         latencyValueElement.textContent = `${latency}ms`;
-        
+
         // 更新连接状态
         if (latency >= LATENCY_THRESHOLD.HIGH) {
             updateConnectionStatus('high-latency');
@@ -142,14 +142,14 @@ export function updateLatency(latency: number): void {
  */
 export function updateMessageStatus(status: MessageStatus): void {
     messageStatus = status;
-    
+
     if (messageStatusElement) {
         // 移除所有状态类
         messageStatusElement.classList.remove('idle', 'sending', 'waiting', 'received');
-        
+
         // 添加当前状态类
         messageStatusElement.classList.add(status);
-        
+
         // 更新显示文本
         switch (status) {
             case 'idle':
@@ -168,6 +168,64 @@ export function updateMessageStatus(status: MessageStatus): void {
     }
 }
 
+let sessionTimerInterval: number | null = null;
+
+/**
+ * 格式化秒数为 mm:ss 格式
+ * @param totalSeconds 总秒数
+ * @returns 格式化后的字符串
+ */
+function formatTime(totalSeconds: number): string {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+/**
+ * 启动会话超时倒计时
+ * @param durationSeconds 倒计时时长（秒）
+ */
+export function startSessionTimer(durationSeconds: number): void {
+    const timerElement = document.getElementById('session-timer');
+    const timerValueElement = document.getElementById('session-timer-value');
+
+    if (!timerElement || !timerValueElement) return;
+
+    // 立即显示计时器
+    timerElement.style.display = 'flex';
+    let remainingTime = durationSeconds;
+
+    const updateDisplay = () => {
+        timerValueElement.textContent = formatTime(remainingTime);
+        if (remainingTime < 0) {
+            if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+        }
+        remainingTime--;
+    };
+
+    // 立即更新一次，然后每秒更新一次
+    updateDisplay();
+    sessionTimerInterval = window.setInterval(updateDisplay, 1000);
+}
+
+/**
+ * 停止并隐藏会话超时倒计时
+ */
+export function stopSessionTimer(): void {
+    if (sessionTimerInterval) {
+        clearInterval(sessionTimerInterval);
+        sessionTimerInterval = null;
+    }
+
+    const timerElement = document.getElementById('session-timer');
+    const timerValueElement = document.getElementById('session-timer-value');
+
+    if (timerElement && timerValueElement) {
+        timerElement.style.display = 'none';
+        timerValueElement.textContent = '--:--';
+    }
+}
+
 /**
  * 开始定期发送ping请求
  */
@@ -176,7 +234,7 @@ function startPingInterval(): void {
     if (pingInterval) {
         clearInterval(pingInterval);
     }
-    
+
     pingInterval = window.setInterval(() => {
         sendPing();
     }, 5000); // 每5秒发送一次ping
@@ -202,7 +260,7 @@ function sendPing(): void {
 export function handlePong(): void {
     const latency = Date.now() - lastPingSent;
     updateLatency(latency);
-    
+
     // 如果延迟在正常范围内，更新连接状态为已连接
     if (latency < LATENCY_THRESHOLD.HIGH) {
         updateConnectionStatus('connected');
@@ -219,6 +277,8 @@ declare global {
             updateLatency: typeof updateLatency;
             updateMessageStatus: typeof updateMessageStatus;
             handlePong: typeof handlePong;
+            startSessionTimer: typeof startSessionTimer;
+            stopSessionTimer: typeof stopSessionTimer;
         }
     }
 }
@@ -229,7 +289,9 @@ window.statusBar = {
     updateConnectionStatus,
     updateLatency,
     updateMessageStatus,
-    handlePong
+    handlePong,
+    startSessionTimer,
+    stopSessionTimer
 };
 
 // 当DOM加载完成后初始化
