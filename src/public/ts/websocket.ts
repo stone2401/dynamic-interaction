@@ -22,6 +22,8 @@ interface SystemInfo {
 // 创建 WebSocket 连接
 // 注意: 与服务器约定使用 ws://<host> (同源)
 const ws = new WebSocket(`ws://${window.location.host}`);
+import { enableFeedbackInput } from './feedback.js';
+
 const summaryDiv = document.getElementById('summary') as HTMLDivElement;
 
 // 将WebSocket实例添加到window对象，以便其他模块访问
@@ -59,9 +61,10 @@ ws.onmessage = (event: MessageEvent) => {
           // 使用 marked.js 解析 Markdown
           summaryDiv.innerHTML = marked.parse(summaryData.data);
           
-          // 更新消息状态
+          // 更新消息状态并重新启用输入
           if (window.statusBar) {
             window.statusBar.updateMessageStatus('received');
+            enableFeedbackInput();
           }
         } else {
           summaryDiv.textContent = 'AI Agent 正在准备摘要...';
@@ -90,9 +93,10 @@ ws.onmessage = (event: MessageEvent) => {
         break;
         
       case 'feedback_status':
-        // 更新消息状态
+        // 更新消息状态并重新启用输入
         if (window.statusBar && data.data && data.data.status) {
           window.statusBar.updateMessageStatus(data.data.status);
+          enableFeedbackInput();
         }
         break;
         
@@ -166,7 +170,7 @@ function requestSystemInfo(): void {
  */
 export function sendFeedback(text: string, images: CustomImageData[]): boolean {
   if (ws.readyState === WebSocket.OPEN) {
-    // 更新消息状态
+    // 更新消息状态为 'sending'
     if (window.statusBar) {
       window.statusBar.updateMessageStatus('sending');
     }
@@ -178,6 +182,15 @@ export function sendFeedback(text: string, images: CustomImageData[]): boolean {
         imageData: images
       }
     }));
+
+    // 发送后将状态更改为 'waiting' 以提供即时反馈
+    if (window.statusBar) {
+      // 使用一个小的延迟来确保 'sending' 状态至少可见片刻
+      setTimeout(() => {
+        window.statusBar.updateMessageStatus('waiting');
+      }, 200); // 延迟200毫秒
+    }
+
     return true;
   } else {
     alert('WebSocket 连接已关闭，请刷新页面重试');

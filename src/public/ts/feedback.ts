@@ -8,6 +8,7 @@ import { clearPreview, attachedImageData } from './imageHandler.js';
 
 const feedbackInput = document.getElementById('feedback-input') as HTMLDivElement;
 const resultsDiv = document.getElementById('results') as HTMLDivElement;
+const dropZone = document.getElementById('drop-zone') as HTMLDivElement;
 
 // 消息状态类型（不真正导入，仅用于类型检查）
 type MessageStatus = 'idle' | 'sending' | 'waiting' | 'received';
@@ -16,6 +17,24 @@ type MessageStatus = 'idle' | 'sending' | 'waiting' | 'received';
  * 发送复合反馈（文本+图片）
  * @returns {boolean} 反馈是否成功发送
  */
+/**
+ * 禁用反馈输入
+ */
+export function disableFeedbackInput(): void {
+    feedbackInput.contentEditable = 'false';
+    feedbackInput.classList.add('disabled');
+    dropZone.classList.add('disabled');
+}
+
+/**
+ * 启用反馈输入
+ */
+export function enableFeedbackInput(): void {
+    feedbackInput.contentEditable = 'true';
+    feedbackInput.classList.remove('disabled');
+    dropZone.classList.remove('disabled');
+}
+
 function sendCompositeFeedback(): boolean {
     const text = feedbackInput.innerText.trim();
 
@@ -41,6 +60,9 @@ function sendCompositeFeedback(): boolean {
     // 更新状态为等待中
     updateMessageStatus('waiting');
 
+    // 禁用输入
+    disableFeedbackInput();
+
     // 发送反馈到服务器
     const success = sendFeedback(feedbackData.text, feedbackData.images as CustomImageData[]);
 
@@ -50,6 +72,7 @@ function sendCompositeFeedback(): boolean {
         // 发送失败时恢复状态，并提示用户
         resultsDiv.textContent = '发送失败，请检查连接';
         updateMessageStatus('idle');
+        enableFeedbackInput();
         // 可选择是否恢复用户输入的内容
         // feedbackInput.innerText = feedbackData.text;
         // restoreImages(feedbackData.images);
