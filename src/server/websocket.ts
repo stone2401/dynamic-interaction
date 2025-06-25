@@ -4,7 +4,6 @@
 
 import { WebSocketServer, WebSocket } from 'ws';
 import { IncomingMessage } from 'http';
-import { exec } from 'child_process';
 import { server } from './express';
 import { logger } from '../logger';
 import { sessionQueue } from './sessionQueue';

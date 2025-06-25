@@ -14,11 +14,10 @@ export const MCP_CONFIG = {
     version: "1.0.0",
 };
 
-// 新增：WebSocket 会话等待客户端连接的超时时间（秒）
-export const WEBSOCKET_SESSION_TIMEOUT_SECONDS = Number(process.env.WEBSOCKET_SESSION_TIMEOUT_SECONDS) || 30;
+// 会话租约超时时间（秒），用于处理中的任务
+export const SESSION_TIMEOUT = Number(process.env.SESSION_TIMEOUT) || 300; // 默认 5 分钟
 
-// 新增：会话租约超时时间（秒），用于处理中的任务
-export const SESSION_LEASE_TIMEOUT_SECONDS = Number(process.env.SESSION_LEASE_TIMEOUT_SECONDS) || 300; // 默认 5 分钟
+
 
 // 日志配置
 export const LOG_CONFIG = {

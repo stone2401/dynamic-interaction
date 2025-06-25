@@ -6,7 +6,7 @@
 import { WebSocket } from 'ws';
 import { logger } from '../logger';
 import { sessionQueue, PendingSessionRequest } from './sessionQueue';
-import { SESSION_LEASE_TIMEOUT_SECONDS } from '../config';
+import { SESSION_TIMEOUT } from '../config';
 import { UserFeedback } from '../types/feedback';
 
 // 发送系统信息
@@ -18,7 +18,7 @@ function sendSystemInfo(ws: WebSocket, sessionRequest: PendingSessionRequest): v
             workspaceDirectory: sessionRequest.projectDirectory || projectRoot,
             sessionId: sessionRequest.id,
             serverVersion: process.env.npm_package_version || '1.0.0',
-            leaseTimeoutSeconds: SESSION_LEASE_TIMEOUT_SECONDS
+            leaseTimeoutSeconds: SESSION_TIMEOUT
         }
     }));
 }
@@ -48,8 +48,6 @@ class Session {
     }
 
     private handleMessage(message: string): void {
-        this.resetTimeout(); // 收到任何消息都重置计时器
-
         try {
             const parsedMessage = JSON.parse(message);
             logger.info(`会话 ${this.sessionRequest.id} 收到消息:`, parsedMessage);
@@ -65,7 +63,6 @@ class Session {
                     this.ws.send(JSON.stringify({ type: 'feedback_status', data: { status: 'received' } }));
                     this.cleanup(); // 任务完成，清理会话
                     break;
-                // 其他消息类型处理...
             }
         } catch (error) {
             logger.error(`处理消息时出错 (会话 ID: ${this.sessionRequest.id}):`, error);
@@ -87,17 +84,23 @@ class Session {
 
     private onTimeout(): void {
         logger.warn(`会话 ${this.sessionRequest.id} 因不活动而超时。`);
-        this.ws.send(JSON.stringify({ type: 'error', data: '会话因长时间未活动已超时。' }));
-        this.sessionRequest.reject(new Error('会话超时'));
+        this.ws.send(JSON.stringify({ type: 'timeout', data: '会话因长时间未活动已超时。' }));
+
+        // 返回默认超时反馈而不是拒绝请求
+        this.sessionRequest.resolve({
+            text: '__SESSION_TIMEOUT__', // 特殊标记，表示会话超时
+            imageData: []
+        });
         sessionQueue.acknowledge(this.sessionRequest.id); // 从队列中移除，不再重试
-        this.cleanup(true); // 清理并关闭连接
+        this.cleanup(); // 清理并关闭连接
     }
 
     private resetTimeout(): void {
         if (this.timeoutId) {
             clearTimeout(this.timeoutId);
         }
-        this.timeoutId = setTimeout(this.onTimeout.bind(this), SESSION_LEASE_TIMEOUT_SECONDS * 1000);
+        logger.info(`会话 ${this.sessionRequest.id} 重置超时计时器`);
+        this.timeoutId = setTimeout(this.onTimeout.bind(this), SESSION_TIMEOUT * 1000);
     }
 
     private cleanup(closeConnection: boolean = false): void {
@@ -119,7 +122,7 @@ class SessionManager {
     private static instance: SessionManager;
     private activeSessions: Map<WebSocket, Session> = new Map();
 
-    private constructor() {}
+    private constructor() { }
 
     public static getInstance(): SessionManager {
         if (!SessionManager.instance) {

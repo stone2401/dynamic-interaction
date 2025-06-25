@@ -11,7 +11,7 @@ interface SystemInfo {
 }
 
 type ConnectionStatus = 'connected' | 'disconnected' | 'high-latency';
-type MessageStatus = 'idle' | 'sending' | 'waiting' | 'received';
+type MessageStatus = 'idle' | 'sending' | 'waiting' | 'received' | 'timeout';
 
 // 延迟阈值（毫秒）
 const LATENCY_THRESHOLD = {
@@ -145,7 +145,7 @@ export function updateMessageStatus(status: MessageStatus): void {
 
     if (messageStatusElement) {
         // 移除所有状态类
-        messageStatusElement.classList.remove('idle', 'sending', 'waiting', 'received');
+        messageStatusElement.classList.remove('idle', 'sending', 'waiting', 'received', 'timeout');
 
         // 添加当前状态类
         messageStatusElement.classList.add(status);
@@ -163,6 +163,9 @@ export function updateMessageStatus(status: MessageStatus): void {
                 break;
             case 'received':
                 messageStatusElement.textContent = '已收到回复';
+                break;
+            case 'timeout':
+                messageStatusElement.textContent = '会话已超时';
                 break;
         }
     }

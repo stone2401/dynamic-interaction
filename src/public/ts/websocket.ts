@@ -34,7 +34,7 @@ const summaryDiv = document.getElementById('summary') as HTMLDivElement;
 ws.onopen = () => {
   console.log('客户端: WebSocket 连接已成功打开 (onopen 事件触发)。');
   summaryDiv.textContent = 'WebSocket 连接已建立，等待 AI 响应...';
-  
+
   // 更新连接状态
   setTimeout(() => {
     if (window.statusBar) {
@@ -44,7 +44,7 @@ ws.onopen = () => {
 
   // 告诉服务器客户端已准备就绪，可安全地发送摘要数据
   ws.send(JSON.stringify({ type: 'client_ready' }));
-  
+
   // 请求系统信息
   setTimeout(() => {
     requestSystemInfo();
@@ -61,7 +61,7 @@ ws.onmessage = (event: MessageEvent) => {
         if (summaryData.data !== undefined && summaryData.data !== null) {
           // 使用 marked.js 解析 Markdown
           summaryDiv.innerHTML = marked.parse(summaryData.data);
-          
+
           // 更新消息状态并重新启用输入
           if (window.statusBar) {
             window.statusBar.updateMessageStatus('received');
@@ -72,20 +72,20 @@ ws.onmessage = (event: MessageEvent) => {
           console.warn('收到的摘要消息格式不完整，缺少 "data" 字段。服务器发送的消息:', event.data);
         }
         break;
-        
+
       case 'server_log':
         const logData = data as ServerLogMessage;
         const { level, text } = logData.data;
         console[level]('%c[Server] ' + text, 'color: grey');
         break;
-        
+
       case 'pong':
         // 处理延迟计算
         if (window.statusBar) {
           window.statusBar.handlePong();
         }
         break;
-        
+
       case 'system_info':
         // 处理系统信息
         if (window.statusBar && data.data) {
@@ -96,7 +96,7 @@ ws.onmessage = (event: MessageEvent) => {
           }
         }
         break;
-        
+
       case 'feedback_status':
         // 更新消息状态并重新启用输入
         if (window.statusBar && data.data && data.data.status) {
@@ -104,7 +104,26 @@ ws.onmessage = (event: MessageEvent) => {
           enableFeedbackInput();
         }
         break;
-        
+
+      case 'timeout':
+        if (window.statusBar) {
+          window.statusBar.updateConnectionStatus('connected');
+          window.statusBar.stopSessionTimer();
+          window.statusBar.updateMessageStatus('timeout');
+        }
+
+        // 禁用输入，因为会话已结束
+        const feedbackInput = document.getElementById('feedback-input') as HTMLTextAreaElement;
+        if (feedbackInput) {
+          feedbackInput.disabled = true;
+        }
+
+        const sendButton = document.getElementById('send-button') as HTMLButtonElement;
+        if (sendButton) {
+          sendButton.disabled = true;
+        }
+        break;
+
       default:
         console.log('收到未知类型的消息:', data.type);
         break;
@@ -119,7 +138,7 @@ ws.onclose = () => {
   console.log('WebSocket 连接已关闭');
   summaryDiv.textContent = 'WebSocket 连接已关闭，请刷新页面重新连接。';
   summaryDiv.style.color = 'red';
-  
+
   // 更新连接状态
   if (window.statusBar) {
     window.statusBar.updateConnectionStatus('disconnected');
@@ -180,7 +199,7 @@ export function sendFeedback(text: string, images: CustomImageData[]): boolean {
     if (window.statusBar) {
       window.statusBar.updateMessageStatus('sending');
     }
-    
+
     ws.send(JSON.stringify({
       type: 'submit_feedback',
       data: {

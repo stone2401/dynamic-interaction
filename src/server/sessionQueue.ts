@@ -6,7 +6,7 @@
 import { WebSocket } from 'ws';
 import { randomUUID } from 'crypto';
 import { UserFeedback } from '../types/feedback';
-import { SESSION_LEASE_TIMEOUT_SECONDS } from '../config';
+import { SESSION_TIMEOUT } from '../config';
 import { logger } from '../logger';
 
 /**
@@ -27,7 +27,6 @@ export interface PendingSessionRequest {
 interface InFlightRequest {
     request: PendingSessionRequest;
     leaseTimestamp: number;
-    timeoutId: NodeJS.Timeout;
 }
 
 /**
@@ -60,16 +59,15 @@ class ReliableSessionQueue {
             return null;
         }
         const request = this.waitingQueue.shift()!;
-        const leaseTimeout = SESSION_LEASE_TIMEOUT_SECONDS * 1000;
+        const leaseTimeout = SESSION_TIMEOUT * 1000;
 
         const timeoutId = setTimeout(() => {
-            this.requeue(request.id, new Error(`会话处理超时 (>${SESSION_LEASE_TIMEOUT_SECONDS}s)`));
+            this.requeue(request.id, new Error(`会话处理超时 (>${SESSION_TIMEOUT}s)`));
         }, leaseTimeout);
 
         this.inFlightRequests.set(request.id, {
             request,
             leaseTimestamp: Date.now(),
-            timeoutId,
         });
 
         logger.info(`会话已租用，ID: ${request.id}。处理中: ${this.inFlightRequests.size}，等待中: ${this.waitingQueue.length}`);
@@ -84,7 +82,6 @@ class ReliableSessionQueue {
     acknowledge(id: string): boolean {
         const inFlight = this.inFlightRequests.get(id);
         if (inFlight) {
-            clearTimeout(inFlight.timeoutId);
             this.inFlightRequests.delete(id);
             logger.info(`会话已成功确认，ID: ${id}。处理中: ${this.inFlightRequests.size}`);
             return true;
@@ -100,7 +97,6 @@ class ReliableSessionQueue {
     requeue(id: string, reason: Error): void {
         const inFlight = this.inFlightRequests.get(id);
         if (inFlight) {
-            clearTimeout(inFlight.timeoutId);
             this.inFlightRequests.delete(id);
             this.waitingQueue.unshift(inFlight.request); // 放回队列头部，优先处理
             logger.warn(`会话已重新入队，ID: ${id}。原因: ${reason.message}。等待队列长度: ${this.waitingQueue.length}`);

@@ -4,7 +4,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { MCP_CONFIG, SESSION_LEASE_TIMEOUT_SECONDS } from '../config';
+import { MCP_CONFIG, SESSION_TIMEOUT, TIMEOUT_PROMPT } from '../config';
 import { solicitUserInput } from './solicit-input';
 import { logger } from "../logger";
 import { z } from 'zod';
@@ -37,7 +37,7 @@ export function configureMcpServer(): void {
 
 * \`project_directory\` (str, 必填): 需要用户审核的项目目录的绝对路径。
 * \`summary\` (str, 必填): 向用户展示的 AI 工作摘要。应清晰说明 AI 完成了什么，并引导用户反馈。内容为 Markdown 格式。
-* \`timeout\` (int, 无效值): 等待用户反馈的超时时间（秒）。默认值: ${SESSION_LEASE_TIMEOUT_SECONDS}。
+* \`timeout\` (int, 无效值): 等待用户反馈的超时时间（秒）。默认值: ${SESSION_TIMEOUT}。
 
 **用户交互流程:**
 1.  UI 界面会显示 \`summary\` 中的工作摘要。
@@ -49,7 +49,7 @@ export function configureMcpServer(): void {
             inputSchema: {
                 summary: z.string().describe("向用户展示的 AI 工作摘要。应清晰说明 AI 完成了什么，并引导用户反馈。内容为 Markdown 格式。"),
                 project_directory: z.string().describe("需要用户审核的项目目录的绝对路径。"),
-                timeout: z.number().optional().describe(`等待用户反馈的超时时间（秒）。默认值: ${SESSION_LEASE_TIMEOUT_SECONDS}。`).default(SESSION_LEASE_TIMEOUT_SECONDS)
+                timeout: z.number().optional().describe(`等待用户反馈的超时时间（秒）。默认值: ${SESSION_TIMEOUT}。`).default(SESSION_TIMEOUT)
             },
             annotations: {
                 displayName: "用户反馈收集器"
@@ -65,7 +65,13 @@ export function configureMcpServer(): void {
                 const content: any[] = [];
 
                 if (feedback.text) {
-                    content.push({ type: "text", text: `用户反馈: ${feedback.text}` });
+                    // 检测特殊的会话超时标记
+                    if (feedback.text === '__SESSION_TIMEOUT__') {
+                        content.push({ type: "text", text: TIMEOUT_PROMPT });
+                        logger.warn("MCP: 会话超时标记被检测到，返回超时消息");
+                    } else {
+                        content.push({ type: "text", text: `用户反馈: ${feedback.text}` });
+                    }
                 }
 
                 if (feedback.imageData) {
