@@ -32,7 +32,7 @@ window.clearPreview = clearPreview;
  * 初始化应用程序
  */
 function initializeApp(): void {
-    console.log('应用程序初始化中...');
+
 
   // 初始化主题切换器
   initializeThemeSwitcher();
@@ -88,7 +88,7 @@ function initializeApp(): void {
     }
   });
 
-  console.log('应用程序初始化完成');
+
 }
 
 // 当DOM加载完成后初始化应用程序

@@ -4,6 +4,7 @@
  */
 
 import { execSync } from 'child_process';
+import { logger } from '../logger';
 
 /**
  * 如果指定端口被占用，尝试释放它
@@ -33,14 +34,14 @@ export function freePortIfOccupied(port: number): void {
                     
                 const isOwn = cmd.includes('dynamic-interaction') || cmd.includes('src/index.ts');
                 if (isOwn) {
-                    console.log(`正在终止占用端口 ${port} 的先前实例 (PID ${pid})`);
+                    logger.info(`正在终止占用端口 ${port} 的先前实例 (PID ${pid})`);
                     try {
                         // 强制终止进程
                         process.kill(parseInt(pid, 10), 'SIGKILL');
                         // 添加小延迟确保进程已终止
                         execSync('sleep 1', { stdio: 'ignore' });
                     } catch (e) {
-                        console.warn(`无法终止进程 ${pid}:`, e);
+                        logger.warn(`无法终止进程 ${pid}:`, e);
                     }
                 } else {
                     throw new Error(`端口 ${port} 被另一个进程占用 (PID ${pid}): ${cmd}`);

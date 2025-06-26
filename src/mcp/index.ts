@@ -6,7 +6,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { MCP_CONFIG, SESSION_TIMEOUT, TIMEOUT_PROMPT } from '../config';
 import { solicitUserInput } from './solicit-input';
-import { logger } from "../logger";
+import { logger } from '../logger';
 import { z } from 'zod';
 
 // 创建 MCP 服务器实例
@@ -79,7 +79,7 @@ export function configureMcpServer(): void {
                 }
 
                 if (feedback.imageData) {
-                    logger.info("MCP: 收到图片反馈:", feedback.imageData);
+                    logger.debug("MCP: 收到图片反馈:", feedback.imageData);
                     if (Array.isArray(feedback.imageData)) {
                         feedback.imageData.forEach((img) =>
                             content.push({ type: "image", data: img })
@@ -120,5 +120,5 @@ export function configureMcpServer(): void {
 export async function startMcpServer(): Promise<void> {
     const transport = new StdioServerTransport();
     await mcpServer.connect(transport);
-    console.error("Dynamic Interaction MCP 服务器正在通过 stdio 运行");
+    logger.error("Dynamic Interaction MCP 服务器正在通过 stdio 运行");
 }

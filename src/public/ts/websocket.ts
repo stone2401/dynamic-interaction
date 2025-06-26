@@ -49,7 +49,7 @@ function connectWebSocket() {
   (window as any).ws = ws; // 将WebSocket实例添加到window对象，以便其他模块访问
 
   ws.onopen = () => {
-    console.log('WebSocket 连接已建立');
+
     summaryDiv.textContent = 'WebSocket 连接已建立，等待 AI 响应...';
     reconnectAttempts = 0; // 连接成功，重置尝试次数
 
@@ -67,7 +67,7 @@ function connectWebSocket() {
   };
 
   ws.onmessage = (event: MessageEvent) => {
-    console.log('收到消息:', event.data);
+
     try {
       const data = JSON.parse(event.data) as WebSocketMessage;
       switch (data.type) {
@@ -140,7 +140,7 @@ function connectWebSocket() {
           break;
 
         default:
-          console.log('收到未知类型的消息:', data.type);
+
           break;
       }
     } catch (e) {
@@ -150,7 +150,7 @@ function connectWebSocket() {
   };
 
   ws.onclose = () => {
-    console.log('WebSocket 连接已关闭');
+
     // 更新连接状态并停止心跳
     if (window.statusBar) {
       window.statusBar.updateConnectionStatus('disconnected');
@@ -178,7 +178,7 @@ function scheduleReconnect() {
   }
 
   const delay = Math.min(initialReconnectDelay * Math.pow(2, reconnectAttempts), maxReconnectDelay);
-  console.log(`WebSocket 将在 ${delay / 1000} 秒后尝试重连... (第 ${reconnectAttempts + 1} 次)`);
+
 
   if (window.statusBar) {
     window.statusBar.updateConnectionStatus('reconnecting');
@@ -226,7 +226,7 @@ export function sendFeedback(text: string, images: CustomImageData[]): boolean {
         image.push(img.name);
       }
     });
-    console.log('发送反馈:', text, image);
+
     ws.send(JSON.stringify({
       type: 'submit_feedback',
       data: {

@@ -42,7 +42,7 @@ export async function solicitUserInput(
     const feedbackPromise = requestFeedbackSession(summary, projectDirectory);
     try {
         const feedback = await feedbackPromise;
-        logger.info('MCP: 从服务器收到反馈:', feedback);
+        logger.debug('MCP: 从服务器收到反馈:', feedback);
         return feedback;
     } catch (error) {
         logger.error('MCP: 获取用户反馈时出错:', error);

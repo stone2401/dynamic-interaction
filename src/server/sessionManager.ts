@@ -50,7 +50,7 @@ class Session {
     private handleMessage(message: string): void {
         try {
             const parsedMessage = JSON.parse(message);
-            logger.info(`会话 ${this.sessionRequest.id} 收到消息:`, parsedMessage);
+            logger.debug(`会话 ${this.sessionRequest.id} 收到消息:`, parsedMessage);
 
             switch (parsedMessage.type) {
                 case 'submit_feedback':
@@ -114,7 +114,7 @@ class Session {
         if (this.timeoutId) {
             clearTimeout(this.timeoutId);
         }
-        logger.info(`会话 ${this.sessionRequest.id} 重置超时计时器`);
+        logger.debug(`会话 ${this.sessionRequest.id} 重置超时计时器`);
         this.timeoutId = setTimeout(this.onTimeout.bind(this), SESSION_TIMEOUT * 1000);
     }
 

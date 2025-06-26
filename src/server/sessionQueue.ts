@@ -42,11 +42,11 @@ class ReliableSessionQueue {
      * @returns 返回新创建的请求ID
      */
     enqueue(requestData: Omit<PendingSessionRequest, 'id'>): string {
-        logger.info(`新会话已入队，摘要: ${requestData.summary}，项目目录: ${requestData.projectDirectory}。等待队列长度: ${this.waitingQueue.length}`);
+        logger.debug(`新会话已入队，摘要: ${requestData.summary}，项目目录: ${requestData.projectDirectory}。等待队列长度: ${this.waitingQueue.length}`);
         const id = randomUUID();
         const newRequest: PendingSessionRequest = { ...requestData, id };
         this.waitingQueue.push(newRequest);
-        logger.info(`新会话已入队，ID: ${id}。等待队列长度: ${this.waitingQueue.length}`);
+        logger.debug(`新会话已入队，ID: ${id}。等待队列长度: ${this.waitingQueue.length}`);
         return id;
     }
 
@@ -70,7 +70,7 @@ class ReliableSessionQueue {
             leaseTimestamp: Date.now(),
         });
 
-        logger.info(`会话已租用，ID: ${request.id}。处理中: ${this.inFlightRequests.size}，等待中: ${this.waitingQueue.length}`);
+        logger.debug(`会话已租用，ID: ${request.id}。处理中: ${this.inFlightRequests.size}，等待中: ${this.waitingQueue.length}`);
         return request;
     }
 
@@ -83,7 +83,7 @@ class ReliableSessionQueue {
         const inFlight = this.inFlightRequests.get(id);
         if (inFlight) {
             this.inFlightRequests.delete(id);
-            logger.info(`会话已成功确认，ID: ${id}。处理中: ${this.inFlightRequests.size}`);
+            logger.debug(`会话已成功确认，ID: ${id}。处理中: ${this.inFlightRequests.size}`);
             return true;
         }
         return false;

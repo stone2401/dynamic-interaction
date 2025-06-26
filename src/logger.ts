@@ -32,20 +32,7 @@ const consoleTransport = new winston.transports.Console({
     ),
 });
 
-// 创建文件传输
-const fileTransports: winston.transport[] = [];
 
-if (LOG_CONFIG.fileLogging) {
-    fileTransports.push(
-        new winston.transports.File({
-            level: 'error',
-            filename: path.join(logDir, LOG_CONFIG.errorFile),
-        }),
-        new winston.transports.File({
-            filename: path.join(logDir, LOG_CONFIG.combinedFile),
-        })
-    );
-}
 
 // 创建 logger 实例
 export const logger = winston.createLogger({
@@ -75,7 +62,7 @@ export const logger = winston.createLogger({
             maxSize: '20m',
             maxFiles: '14d'
         }),
-        ...fileTransports
+
     ],
     exitOnError: false // 防止程序因日志错误而崩溃
 });

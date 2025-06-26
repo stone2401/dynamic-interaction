@@ -7,6 +7,7 @@
 import { PORT } from './config';
 import { freePortIfOccupied } from './server/port';
 import { configureExpress, startExpressServer } from './server/express';
+import { logger } from './logger';
 import { configureWebSocketServer } from './server/websocket';
 import { configureMcpServer, startMcpServer } from './mcp';
 
@@ -26,14 +27,14 @@ async function main() {
         await freePortIfOccupied(PORT);
         await startExpressServer(); // 这会启动服务器并开始监听端口
         await startMcpServer();
-        console.log('应用程序已成功启动。');
+        logger.info('应用程序已成功启动。');
     } catch (error: unknown) { // Explicitly type error as unknown
-        console.error('启动服务器失败:', error);
+        logger.error('启动服务器失败:', error);
         // Type guard for error with a 'code' property
         if (typeof error === 'object' && error !== null && 'code' in error) {
             const nodeError = error as NodeJS.ErrnoException; // Cast to ErrnoException
             if (nodeError.code === 'EADDRINUSE') {
-                console.error(`端口 ${PORT} 已被占用。是否有另一个服务器实例正在运行？`);
+                logger.error(`端口 ${PORT} 已被占用。是否有另一个服务器实例正在运行？`);
             }
         }
         process.exit(1);
