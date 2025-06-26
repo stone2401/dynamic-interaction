@@ -79,7 +79,15 @@ class Session {
 
     private handleClose(): void {
         logger.info(`客户端断开连接 (会话 ID: ${this.sessionRequest.id})`);
-        sessionQueue.requeue(this.sessionRequest.id, new Error('WebSocket 连接在反馈完成前关闭。'));
+
+        // 用户主动关闭对话，认为已放弃反馈，返回占位结果并结束会话
+        this.sessionRequest.resolve({
+            text: '__SESSION_CLOSED__', // 特殊标记，表示用户关闭会话
+            imageData: []
+        });
+        // 直接确认并移除队列中的请求，避免残留
+        sessionQueue.acknowledge(this.sessionRequest.id);
+
         this.cleanup();
     }
 

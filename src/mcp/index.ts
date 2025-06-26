@@ -65,10 +65,14 @@ export function configureMcpServer(): void {
                 const content: any[] = [];
 
                 if (feedback.text) {
-                    // 检测特殊的会话超时标记
+                    // 检测特殊的会话状态标记
                     if (feedback.text === '__SESSION_TIMEOUT__') {
                         content.push({ type: "text", text: TIMEOUT_PROMPT });
                         logger.warn("MCP: 会话超时标记被检测到，返回超时消息");
+                    } else if (feedback.text === '__SESSION_CLOSED__') {
+                        // 用户主动关闭会话，同样返回 continue
+                        content.push({ type: "text", text: TIMEOUT_PROMPT });
+                        logger.warn("MCP: 会话关闭标记被检测到，返回 continue");
                     } else {
                         content.push({ type: "text", text: `用户反馈: ${feedback.text}` });
                     }
