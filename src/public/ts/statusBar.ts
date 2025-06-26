@@ -10,7 +10,7 @@ interface SystemInfo {
     serverVersion?: string;
 }
 
-type ConnectionStatus = 'connected' | 'disconnected' | 'high-latency';
+type ConnectionStatus = 'connected' | 'disconnected' | 'high-latency' | 'reconnecting';
 type MessageStatus = 'idle' | 'sending' | 'waiting' | 'received' | 'timeout';
 
 // 延迟阈值（毫秒）
@@ -53,11 +53,6 @@ export function initializeStatusBar(): void {
     // 初始状态
     updateConnectionStatus('disconnected');
     updateMessageStatus('idle');
-
-    // 开始心跳检测
-    if (typeof window.ws !== 'undefined') {
-        startPingInterval();
-    }
 }
 
 /**
@@ -85,8 +80,8 @@ export function updateConnectionStatus(status: ConnectionStatus): void {
 
     if (connectionStatusElement) {
         // 移除所有状态类
-        connectionStatusElement.classList.remove('connected', 'disconnected', 'high-latency');
-        statusPulseElement.classList.remove('connected', 'disconnected', 'high-latency');
+        connectionStatusElement.classList.remove('connected', 'disconnected', 'high-latency', 'reconnecting');
+        statusPulseElement.classList.remove('connected', 'disconnected', 'high-latency', 'reconnecting');
 
         // 添加当前状态类
         connectionStatusElement.classList.add(status);
@@ -103,6 +98,17 @@ export function updateConnectionStatus(status: ConnectionStatus): void {
             case 'high-latency':
                 connectionStatusElement.textContent = '延迟高';
                 break;
+            case 'reconnecting':
+                connectionStatusElement.textContent = '正在重连...';
+                break;
+        }
+
+        // 如果连接断开或正在重连，重置延迟显示
+        if (status === 'disconnected' || status === 'reconnecting') {
+            if (latencyValueElement) {
+                latencyValueElement.textContent = '-- ms';
+                latencyValueElement.classList.remove('normal', 'medium', 'high');
+            }
         }
     }
 }
@@ -237,10 +243,21 @@ function startPingInterval(): void {
     if (pingInterval) {
         clearInterval(pingInterval);
     }
+    sendPing();
 
     pingInterval = window.setInterval(() => {
         sendPing();
     }, 5000); // 每5秒发送一次ping
+}
+
+/**
+ * 停止定期发送ping请求
+ */
+function stopPingInterval(): void {
+    if (pingInterval) {
+        clearInterval(pingInterval);
+        pingInterval = 0;
+    }
 }
 
 /**
@@ -252,16 +269,19 @@ function sendPing(): void {
         window.ws.send(JSON.stringify({
             type: 'ping'
         }));
-    } else {
-        updateConnectionStatus('disconnected');
     }
 }
 
 /**
  * 处理pong响应
+ * @param data 服务器返回的数据，包含 timestamp
  */
-export function handlePong(): void {
-    const latency = Date.now() - lastPingSent;
+export function handlePong(data?: { timestamp?: number }): void {
+    // 如果服务器返回了时间戳，使用它来计算延迟
+    // 否则回退到基于本地时间的计算
+    const now = Date.now();
+    const latency = data?.timestamp ? now - data.timestamp : now - lastPingSent;
+
     updateLatency(latency);
 
     // 如果延迟在正常范围内，更新连接状态为已连接
@@ -282,6 +302,8 @@ declare global {
             handlePong: typeof handlePong;
             startSessionTimer: typeof startSessionTimer;
             stopSessionTimer: typeof stopSessionTimer;
+            startPingInterval: typeof startPingInterval;
+            stopPingInterval: typeof stopPingInterval;
         }
     }
 }
@@ -294,7 +316,9 @@ window.statusBar = {
     updateMessageStatus,
     handlePong,
     startSessionTimer,
-    stopSessionTimer
+    stopSessionTimer,
+    startPingInterval,
+    stopPingInterval
 };
 
 // 当DOM加载完成后初始化

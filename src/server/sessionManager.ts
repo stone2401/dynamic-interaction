@@ -63,6 +63,13 @@ class Session {
                     this.ws.send(JSON.stringify({ type: 'feedback_status', data: { status: 'received' } }));
                     this.cleanup(); // 任务完成，清理会话
                     break;
+                case 'ping':
+                    // 立即响应 pong 消息
+                    this.ws.send(JSON.stringify({
+                        type: 'pong',
+                        data: { timestamp: Date.now() }
+                    }));
+                    break;
             }
         } catch (error) {
             logger.error(`处理消息时出错 (会话 ID: ${this.sessionRequest.id}):`, error);

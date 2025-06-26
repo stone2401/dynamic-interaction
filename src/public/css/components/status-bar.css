@@ -91,6 +91,10 @@
     color: #ff9500;
 }
 
+.status-item.connection.reconnecting {
+    color: #ff9500;
+}
+
 .status-item.connection {
     font-weight: 500;
     padding-left: 6px;
@@ -119,6 +123,11 @@
 
 .status-pulse.high-latency {
     background-color: #ff9500;
+}
+
+.status-pulse.reconnecting {
+    background-color: #ff9500; /* Use orange for reconnecting */
+    animation: pulse 1s infinite; /* Faster pulse for reconnecting */
 }
 
 @keyframes pulse {

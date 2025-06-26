@@ -2,12 +2,9 @@
  * WebSocket 通信模块
  * 处理与服务器的 WebSocket 连接和消息传递
  */
-
-// 使用正确的类型导入和引用
-// 注意：statusBar模块已在全局Window上定义了类型
+import { enableFeedbackInput } from './feedback.js';
 
 // 告诉 TypeScript marked 是一个全局变量 (从CDN加载)
-// 更明确的类型声明，而不是使用any
 declare namespace marked {
   function parse(markdown: string, options?: any): string;
 }
@@ -20,186 +17,207 @@ interface SystemInfo {
   leaseTimeoutSeconds?: number;
 }
 
-// 创建 WebSocket 连接
-// 注意: 与服务器约定使用 ws://<host> (同源)
-const ws = new WebSocket(`ws://${window.location.host}`);
-import { enableFeedbackInput } from './feedback.js';
+// WebSocket 变量和重连配置
+let ws: WebSocket;
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 10;
+const initialReconnectDelay = 2000; // 2 seconds
+const maxReconnectDelay = 10000; // 10 seconds
+let reconnectTimeoutId: number | null = null;
 
 const summaryDiv = document.getElementById('summary') as HTMLDivElement;
 
-// 将WebSocket实例添加到window对象，以便其他模块访问
-(window as any).ws = ws;
+function connectWebSocket() {
+  // 如果正在尝试重连，则清除之前的计时器
+  if (reconnectTimeoutId) {
+    clearTimeout(reconnectTimeoutId);
+    reconnectTimeoutId = null;
+  }
 
-// WebSocket 事件处理
-ws.onopen = () => {
-  console.log('客户端: WebSocket 连接已成功打开 (onopen 事件触发)。');
-  summaryDiv.textContent = 'WebSocket 连接已建立，等待 AI 响应...';
+  // 更新UI状态为正在连接
+  if (window.statusBar) {
+    // 只有在第一次之后才显示 "reconnecting"
+    if (reconnectAttempts > 0) {
+      window.statusBar.updateConnectionStatus('reconnecting');
+    }
+  }
+  summaryDiv.textContent = '正在连接 WebSocket...';
+  summaryDiv.style.color = 'inherit';
 
-  // 更新连接状态
-  setTimeout(() => {
+
+  ws = new WebSocket(`ws://${window.location.host}`);
+  (window as any).ws = ws; // 将WebSocket实例添加到window对象，以便其他模块访问
+
+  ws.onopen = () => {
+    console.log('WebSocket 连接已建立');
+    summaryDiv.textContent = 'WebSocket 连接已建立，等待 AI 响应...';
+    reconnectAttempts = 0; // 连接成功，重置尝试次数
+
+    // 更新连接状态并开始心跳
     if (window.statusBar) {
       window.statusBar.updateConnectionStatus('connected');
+      window.statusBar.startPingInterval();
     }
-  }, 100); // 等待状态栏初始化
 
-  // 告诉服务器客户端已准备就绪，可安全地发送摘要数据
-  ws.send(JSON.stringify({ type: 'client_ready' }));
+    // 告诉服务器客户端已准备就绪
+    ws.send(JSON.stringify({ type: 'client_ready' }));
 
-  // 请求系统信息
-  setTimeout(() => {
-    requestSystemInfo();
-  }, 500); // 短暂延迟以确保statusBar模块已加载
-};
+    // 请求系统信息
+    setTimeout(requestSystemInfo, 500);
+  };
 
-ws.onmessage = (event: MessageEvent) => {
-  console.log('收到消息:', event.data);
-  try {
-    const data = JSON.parse(event.data) as WebSocketMessage;
-    switch (data.type) {
-      case 'summary':
-        const summaryData = data as SummaryMessage;
-        if (summaryData.data !== undefined && summaryData.data !== null) {
-          // 使用 marked.js 解析 Markdown
-          summaryDiv.innerHTML = marked.parse(summaryData.data);
+  ws.onmessage = (event: MessageEvent) => {
+    console.log('收到消息:', event.data);
+    try {
+      const data = JSON.parse(event.data) as WebSocketMessage;
+      switch (data.type) {
+        case 'summary':
+          const summaryData = data as SummaryMessage;
+          if (summaryData.data !== undefined && summaryData.data !== null) {
+            // 使用 marked.js 解析 Markdown
+            summaryDiv.innerHTML = marked.parse(summaryData.data);
 
-          // 更新消息状态并重新启用输入
+            // 更新消息状态并重新启用输入
+            if (window.statusBar) {
+              window.statusBar.updateMessageStatus('received');
+              enableFeedbackInput();
+            }
+          } else {
+            summaryDiv.textContent = 'AI Agent 正在准备摘要...';
+            console.warn('收到的摘要消息格式不完整，缺少 "data" 字段。服务器发送的消息:', event.data);
+          }
+          break;
+
+        case 'server_log':
+          const logData = data as ServerLogMessage;
+          const { level, text } = logData.data;
+          console[level]('%c[Server] ' + text, 'color: grey');
+          break;
+
+        case 'pong':
+          // 处理延迟计算，传递服务器返回的时间戳数据
           if (window.statusBar) {
-            window.statusBar.updateMessageStatus('received');
+            window.statusBar.handlePong(data.data);
+          }
+          break;
+
+        case 'system_info':
+          // 处理系统信息
+          if (window.statusBar && data.data) {
+            const sysInfo = data.data as SystemInfo;
+            window.statusBar.updateSystemInfo(sysInfo);
+            if (sysInfo.leaseTimeoutSeconds && sysInfo.leaseTimeoutSeconds > 0) {
+              window.statusBar.startSessionTimer(sysInfo.leaseTimeoutSeconds);
+            }
+          }
+          break;
+
+        case 'feedback_status':
+          // 更新消息状态并重新启用输入
+          if (window.statusBar && data.data && data.data.status) {
+            window.statusBar.updateMessageStatus(data.data.status);
             enableFeedbackInput();
           }
-        } else {
-          summaryDiv.textContent = 'AI Agent 正在准备摘要...';
-          console.warn('收到的摘要消息格式不完整，缺少 "data" 字段。服务器发送的消息:', event.data);
-        }
-        break;
+          break;
 
-      case 'server_log':
-        const logData = data as ServerLogMessage;
-        const { level, text } = logData.data;
-        console[level]('%c[Server] ' + text, 'color: grey');
-        break;
-
-      case 'pong':
-        // 处理延迟计算
-        if (window.statusBar) {
-          window.statusBar.handlePong();
-        }
-        break;
-
-      case 'system_info':
-        // 处理系统信息
-        if (window.statusBar && data.data) {
-          const sysInfo = data.data as SystemInfo;
-          window.statusBar.updateSystemInfo(sysInfo);
-          if (sysInfo.leaseTimeoutSeconds && sysInfo.leaseTimeoutSeconds > 0) {
-            window.statusBar.startSessionTimer(sysInfo.leaseTimeoutSeconds);
+        case 'timeout':
+          if (window.statusBar) {
+            window.statusBar.updateConnectionStatus('connected');
+            window.statusBar.stopSessionTimer();
+            window.statusBar.updateMessageStatus('timeout');
           }
-        }
-        break;
 
-      case 'feedback_status':
-        // 更新消息状态并重新启用输入
-        if (window.statusBar && data.data && data.data.status) {
-          window.statusBar.updateMessageStatus(data.data.status);
-          enableFeedbackInput();
-        }
-        break;
+          // 禁用输入，因为会话已结束
+          const feedbackInput = document.getElementById('feedback-input') as HTMLTextAreaElement;
+          if (feedbackInput) {
+            feedbackInput.disabled = true;
+          }
 
-      case 'timeout':
-        if (window.statusBar) {
-          window.statusBar.updateConnectionStatus('connected');
-          window.statusBar.stopSessionTimer();
-          window.statusBar.updateMessageStatus('timeout');
-        }
+          const sendButton = document.getElementById('send-button') as HTMLButtonElement;
+          if (sendButton) {
+            sendButton.disabled = true;
+          }
+          break;
 
-        // 禁用输入，因为会话已结束
-        const feedbackInput = document.getElementById('feedback-input') as HTMLTextAreaElement;
-        if (feedbackInput) {
-          feedbackInput.disabled = true;
-        }
-
-        const sendButton = document.getElementById('send-button') as HTMLButtonElement;
-        if (sendButton) {
-          sendButton.disabled = true;
-        }
-        break;
-
-      default:
-        console.log('收到未知类型的消息:', data.type);
-        break;
+        default:
+          console.log('收到未知类型的消息:', data.type);
+          break;
+      }
+    } catch (e) {
+      console.error('解析 WebSocket 消息时出错:', e);
+      summaryDiv.textContent = '收到无效消息';
     }
-  } catch (e) {
-    console.error('解析 WebSocket 消息时出错:', e);
-    summaryDiv.textContent = '收到无效消息';
+  };
+
+  ws.onclose = () => {
+    console.log('WebSocket 连接已关闭');
+    // 更新连接状态并停止心跳
+    if (window.statusBar) {
+      window.statusBar.updateConnectionStatus('disconnected');
+      window.statusBar.stopSessionTimer();
+      window.statusBar.stopPingInterval();
+    }
+    scheduleReconnect();
+  };
+
+  ws.onerror = (err) => {
+    console.error('WebSocket 错误:', err);
+    // onclose 会在 error 后被调用, 所以重连逻辑会触发
+  };
+}
+
+function scheduleReconnect() {
+  if (reconnectAttempts >= maxReconnectAttempts) {
+    console.error('已达到最大重连次数，停止重连。');
+    summaryDiv.textContent = '无法连接到服务器，请检查网络并刷新页面。';
+    summaryDiv.style.color = 'red';
+    if (window.statusBar) {
+      window.statusBar.updateConnectionStatus('disconnected');
+    }
+    return;
   }
-};
 
-ws.onclose = () => {
-  console.log('WebSocket 连接已关闭');
-  summaryDiv.textContent = 'WebSocket 连接已关闭，请刷新页面重新连接。';
-  summaryDiv.style.color = 'red';
+  const delay = Math.min(initialReconnectDelay * Math.pow(2, reconnectAttempts), maxReconnectDelay);
+  console.log(`WebSocket 将在 ${delay / 1000} 秒后尝试重连... (第 ${reconnectAttempts + 1} 次)`);
 
-  // 更新连接状态
   if (window.statusBar) {
-    window.statusBar.updateConnectionStatus('disconnected');
-    window.statusBar.stopSessionTimer();
+    window.statusBar.updateConnectionStatus('reconnecting');
   }
-};
+  summaryDiv.textContent = '连接已断开，正在尝试重新连接...';
+  summaryDiv.style.color = '#ff9500'; // Orange color for warning
 
-/**
- * 发送命令到服务器
- * @param {string} command - 要执行的命令
- */
+  reconnectAttempts++;
+  reconnectTimeoutId = window.setTimeout(connectWebSocket, delay);
+}
+
+// 导出的函数保持不变
 export function sendCommand(command: string): boolean {
-  if (ws.readyState === WebSocket.OPEN) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({
       type: 'command',
       data: command
     }));
     return true;
   } else {
-    alert('WebSocket 连接已关闭，请刷新页面重试');
+    console.warn('WebSocket 未连接，无法发送命令。');
+    // 可以在这里提示用户，或者静默失败
     return false;
   }
 }
 
-/**
- * 发送ping请求到服务器
- */
-export function sendPing(): boolean {
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({
-      type: 'ping',
-      data: { timestamp: Date.now() }
-    }));
-    return true;
-  }
-  return false;
-}
-
-/**
- * 请求系统信息
- */
 function requestSystemInfo(): void {
-  if (ws.readyState === WebSocket.OPEN) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({
       type: 'get_system_info'
     }));
   }
 }
 
-/**
- * 发送复合反馈（文本+图片）到服务器
- * @param {string} text - 反馈文本
- * @param {Array} images - 图片数据数组
- */
 export function sendFeedback(text: string, images: CustomImageData[]): boolean {
-  if (ws.readyState === WebSocket.OPEN) {
-    // 更新消息状态为 'sending'
+  if (ws && ws.readyState === WebSocket.OPEN) {
     if (window.statusBar) {
       window.statusBar.updateMessageStatus('sending');
     }
-
     ws.send(JSON.stringify({
       type: 'submit_feedback',
       data: {
@@ -207,18 +225,17 @@ export function sendFeedback(text: string, images: CustomImageData[]): boolean {
         imageData: images
       }
     }));
-
-    // 发送后将状态更改为 'waiting' 以提供即时反馈
     if (window.statusBar) {
-      // 使用一个小的延迟来确保 'sending' 状态至少可见片刻
       setTimeout(() => {
         window.statusBar.updateMessageStatus('waiting');
-      }, 200); // 延迟200毫秒
+      }, 200);
     }
-
     return true;
   } else {
     alert('WebSocket 连接已关闭，请刷新页面重试');
     return false;
   }
 }
+
+// 初始连接
+connectWebSocket();

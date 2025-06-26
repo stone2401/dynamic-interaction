@@ -64,6 +64,15 @@ export function configureWebSocketServer(): void {
             logger.error(`WebSocket客户端连接出错:`, error);
         });
 
+        ws.on('message', (message: string) => {
+            const parsedMessage = JSON.parse(message);
+            switch (parsedMessage.type) {
+                case 'ping':
+                    ws.send(JSON.stringify({ type: 'pong', data: { timestamp: Date.now() } }));
+                    break;
+            }
+        })
+
         ws.send(JSON.stringify({ type: 'info', data: '已连接到反馈服务器，等待任务分配。' }));
 
         checkQueueAndProcess();
