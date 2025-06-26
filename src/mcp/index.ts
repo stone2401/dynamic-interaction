@@ -79,6 +79,7 @@ export function configureMcpServer(): void {
                 }
 
                 if (feedback.imageData) {
+                    logger.info("MCP: 收到图片反馈:", feedback.imageData);
                     if (Array.isArray(feedback.imageData)) {
                         feedback.imageData.forEach((img) =>
                             content.push({ type: "image", data: img })

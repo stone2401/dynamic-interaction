@@ -218,11 +218,20 @@ export function sendFeedback(text: string, images: CustomImageData[]): boolean {
     if (window.statusBar) {
       window.statusBar.updateMessageStatus('sending');
     }
+    let image: string[] = [];
+    images.forEach(img => {
+      if (img.dataUrl) {
+        image.push(img.dataUrl);
+      } else {
+        image.push(img.name);
+      }
+    });
+    console.log('发送反馈:', text, image);
     ws.send(JSON.stringify({
       type: 'submit_feedback',
       data: {
         text: text,
-        imageData: images
+        imageData: image
       }
     }));
     if (window.statusBar) {

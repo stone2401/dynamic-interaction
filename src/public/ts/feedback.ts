@@ -7,7 +7,7 @@ import { sendFeedback } from './websocket.js';
 import { clearPreview, attachedImageData } from './imageHandler.js';
 
 const feedbackInput = document.getElementById('feedback-input') as HTMLDivElement;
-const resultsDiv = document.getElementById('results') as HTMLDivElement;
+const messageStatusElement = document.getElementById('message-status-value')!;
 const dropZone = document.getElementById('drop-zone') as HTMLDivElement;
 
 // 消息状态类型（不真正导入，仅用于类型检查）
@@ -40,7 +40,9 @@ function sendCompositeFeedback(): boolean {
 
     // 检查是否有文本或图片
     if (!text && (!attachedImageData || attachedImageData.length === 0)) {
-        resultsDiv.textContent = '请输入反馈文本或添加图片';
+        if (messageStatusElement) {
+            messageStatusElement.textContent = '请输入反馈文本或添加图片';
+        }
         updateMessageStatus('idle');
         return false;
     }
@@ -67,10 +69,14 @@ function sendCompositeFeedback(): boolean {
     const success = sendFeedback(feedbackData.text, feedbackData.images as CustomImageData[]);
 
     if (success) {
-        resultsDiv.textContent = '反馈已发送';
+        if (messageStatusElement) {
+            messageStatusElement.textContent = '反馈已发送';
+        }
     } else {
         // 发送失败时恢复状态，并提示用户
-        resultsDiv.textContent = '发送失败，请检查连接';
+        if (messageStatusElement) {
+            messageStatusElement.textContent = '发送失败，请检查连接';
+        }
         updateMessageStatus('idle');
         enableFeedbackInput();
         // 可选择是否恢复用户输入的内容
@@ -101,7 +107,7 @@ function initializeFeedbackHandlers(): void {
     if (sendButton) {
         sendButton.addEventListener('click', sendCompositeFeedback);
     }
-    
+
     // 添加Ctrl+Enter快捷键发送反馈
     feedbackInput.addEventListener('keydown', (event) => {
         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
@@ -109,7 +115,7 @@ function initializeFeedbackHandlers(): void {
             sendCompositeFeedback();
         }
     });
-    
+
     // 初始化时设置状态为空闲
     updateMessageStatus('idle');
 }
