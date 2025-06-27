@@ -98,6 +98,8 @@ export function configureMcpServer(): void {
                     content.push({ type: "text", text: "用户未提供反馈，继续执行" });
                 }
 
+                logger.info(`MCP: 准备返回给 Agent 的最终内容: ${JSON.stringify(content, null, 2)}`);
+
                 return { content };
             } catch (error) {
                 // 发生错误时通知调用方
