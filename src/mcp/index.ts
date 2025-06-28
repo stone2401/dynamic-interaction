@@ -8,6 +8,7 @@ import { MCP_CONFIG, SESSION_TIMEOUT, TIMEOUT_PROMPT } from '../config';
 import { solicitUserInput } from './solicit-input';
 import { logger } from '../logger';
 import { z } from 'zod';
+import { WebSocketTransport } from "../server/websocketTransport";
 
 // 创建 MCP 服务器实例
 export const mcpServer = new McpServer({

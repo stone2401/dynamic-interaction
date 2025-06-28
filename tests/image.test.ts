@@ -1,60 +1,59 @@
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { CreateMessageRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import readline from 'readline';
+import { Anthropic } from "@anthropic-ai/sdk";
+import {
+    MessageParam,
+    Tool,
+} from "@anthropic-ai/sdk/resources/messages/messages.mjs";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import readline from "readline/promises";
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-});
 
-const transport = new StdioClientTransport(
-    {
-        command: process.execPath,
-        args: [
-            "/Users/stone2401/Desktop/project/NodeJs/dynamic-interaction/dist/src/cli.js"
-        ],
-        env: {
-            "LOG_DIR": "/Users/stone2401/Desktop/project/NodeJs/dynamic-interaction/logs",
-            "LOG_ERROR_FILE": "error.log",
-            "LOG_COMBINED_FILE": "combined.log",
-            "LOG_LEVEL": "info",
-            "LOG_COLORIZE": "false",
-            "LOG_TO_FILE": "true"
+class MCPClient {
+    private mcp: Client;
+    private transport: StdioClientTransport | null = null;
+    private tools: Tool[] = [];
+
+    constructor() {
+        this.mcp = new Client({ name: "dynamic-interaction", version: "1.0.0" });
+    }
+    // 方法将在这里添加
+
+    async connectToServer(serverScriptPath: string) {
+        try {
+            const isJs = serverScriptPath.endsWith(".js");
+            const isPy = serverScriptPath.endsWith(".py");
+            if (!isJs && !isPy) {
+                throw new Error("服务器脚本必须是 .js 或 .py 文件");
+            }
+            const command = isPy
+                ? process.platform === "win32"
+                    ? "python"
+                    : "python3"
+                : process.execPath;
+
+            this.transport = new StdioClientTransport({
+                command,
+                args: [serverScriptPath],
+            });
+            this.mcp.connect(this.transport);
+
+            const toolsResult = await this.mcp.listTools();
+            this.tools = toolsResult.tools.map((tool) => {
+                console.log(tool);
+                return {
+                    name: tool.name,
+                    description: tool.description,
+                    input_schema: tool.inputSchema,
+                };
+            });
+            console.log(
+                "已连接到服务器，工具包括：",
+                this.tools.map(({ name }) => name)
+            );
+        } catch (e) {
+            console.log("无法连接到 MCP 服务器: ", e);
+            throw e;
         }
-    },
-);
-const client = new Client({
-    name: 'dynamic-interaction',
-    version: '1.0.0',
-}, {
-    capabilities: {
-        sampling: {
-        },
-        resources: {},
-        tools: {},
-    },
-});
-
-client.setRequestHandler(CreateMessageRequestSchema, async (request) => {
-    const {
-        params: { messages },
-    } = request;
-    return new Promise((resolve) => {
-        rl.question(`${messages[0].content.text}`, (answer) => {
-            resolve({ model: '', role: 'user', content: { type: 'text', text: answer } });
-        });
-    });
-});
-
-
-
-async function TestImage() {
-    // 连接客户端到 MCP 服务器
-    await client.connect(transport);
-    const tools = await client.listTools();
-    console.log("tools", tools)
+    }
 }
 
-
-TestImage();

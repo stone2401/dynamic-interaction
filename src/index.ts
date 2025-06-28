@@ -25,8 +25,10 @@ async function main() {
     // 3. 启动 HTTP 服务器 (WebSocket 服务器附加在上面)
     try {
         await freePortIfOccupied(PORT);
-        await startExpressServer(); // 这会启动服务器并开始监听端口
-        await startMcpServer();
+        await Promise.all([
+            startExpressServer(),
+            startMcpServer(),
+        ]);
         logger.info('应用程序已成功启动。');
     } catch (error: unknown) { // Explicitly type error as unknown
         logger.error('启动服务器失败:', error);
