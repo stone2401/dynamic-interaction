@@ -139,6 +139,12 @@ function connectWebSocket() {
           }
           break;
 
+        case 'stop_timer':
+          if (window.statusBar) {
+            window.statusBar.stopSessionTimer();
+          }
+          break;
+
         default:
 
           break;

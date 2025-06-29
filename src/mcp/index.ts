@@ -123,5 +123,4 @@ export function configureMcpServer(): void {
 export async function startMcpServer(): Promise<void> {
     const transport = new StdioServerTransport();
     await mcpServer.connect(transport);
-    logger.error("Dynamic Interaction MCP 服务器正在通过 stdio 运行");
 }

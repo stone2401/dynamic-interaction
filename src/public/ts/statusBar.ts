@@ -200,15 +200,30 @@ export function startSessionTimer(durationSeconds: number): void {
 
     if (!timerElement || !timerValueElement) return;
 
+    // 先清除已有的定时器，防止多个定时器同时运行
+    if (sessionTimerInterval) {
+        clearInterval(sessionTimerInterval);
+        sessionTimerInterval = null;
+    }
+
     // 立即显示计时器
     timerElement.style.display = 'flex';
     let remainingTime = durationSeconds;
 
     const updateDisplay = () => {
-        timerValueElement.textContent = formatTime(remainingTime);
-        if (remainingTime < 0) {
-            if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+        // 先检查是否已经到零或负数
+        if (remainingTime <= 0) {
+            // 如果到零，显示00:00并清除定时器
+            timerValueElement.textContent = '00:00';
+            if (sessionTimerInterval) {
+                clearInterval(sessionTimerInterval);
+                sessionTimerInterval = null;
+            }
+            return;
         }
+        
+        // 显示当前时间并递减
+        timerValueElement.textContent = formatTime(remainingTime);
         remainingTime--;
     };
 

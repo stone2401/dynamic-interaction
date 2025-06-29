@@ -61,6 +61,7 @@ class Session {
                     this.sessionRequest.resolve(feedback);
                     sessionQueue.acknowledge(this.sessionRequest.id);
                     this.ws.send(JSON.stringify({ type: 'feedback_status', data: { status: 'received' } }));
+                    this.ws.send(JSON.stringify({ type: 'stop_timer' }));
                     this.cleanup(); // 任务完成，清理会话
                     break;
                 case 'ping':
@@ -80,15 +81,15 @@ class Session {
     private handleClose(): void {
         logger.info(`客户端断开连接 (会话 ID: ${this.sessionRequest.id})`);
 
-        // 用户主动关闭对话，认为已放弃反馈，返回占位结果并结束会话
-        this.sessionRequest.resolve({
-            text: '__SESSION_CLOSED__', // 特殊标记，表示用户关闭会话
-            imageData: []
-        });
-        // 直接确认并移除队列中的请求，避免残留
-        sessionQueue.acknowledge(this.sessionRequest.id);
+        // // 用户主动关闭对话，认为已放弃反馈，返回占位结果并结束会话
+        // this.sessionRequest.resolve({
+        //     text: '__SESSION_CLOSED__', // 特殊标记，表示用户关闭会话
+        //     imageData: []
+        // });
+        // // 直接确认并移除队列中的请求，避免残留
+        // sessionQueue.acknowledge(this.sessionRequest.id);
 
-        this.cleanup();
+        // this.cleanup();
     }
 
     private handleError(error: Error): void {
@@ -100,6 +101,8 @@ class Session {
     private onTimeout(): void {
         logger.warn(`会话 ${this.sessionRequest.id} 因不活动而超时。`);
         this.ws.send(JSON.stringify({ type: 'timeout', data: '会话因长时间未活动已超时。' }));
+        this.ws.send(JSON.stringify({ type: 'stop_timer' }));
+
 
         // 返回默认超时反馈而不是拒绝请求
         this.sessionRequest.resolve({
