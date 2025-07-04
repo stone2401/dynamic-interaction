@@ -18,8 +18,7 @@
     "build:frontend": "tsc --project tsconfig.frontend.json",
     "copy-assets": "mkdir -p dist/src/public/js && cp -r dist/frontend/public/ts/*.js dist/src/public/js/ && cp -r src/public/css dist/src/public/ && cp src/public/index.html dist/src/public/ && rm -rf dist/src/public/ts",
     "start": "node dist/src/index.js",
-    "dev": "nodemon --watch 'src/**/*.ts' --exec ts-node src/index.ts",
-    "test": "jest --runInBand"
+    "dev": "nodemon --watch 'src/**/*.ts' --exec ts-node src/index.ts"
   },
   "keywords": [
     "dynamic-interaction",
@@ -36,16 +35,13 @@
   "packageManager": "pnpm@9.10.0^",
   "devDependencies": {
     "@types/express": "^5.0.3",
-    "@types/jest": "^29.5.2",
     "@types/multer": "^1.4.13",
     "@types/node": "^24.0.1",
     "@types/ws": "^8.18.1",
     "copyfiles": "^2.4.1",
     "express": "^5.1.0",
-    "jest": "^29.7.0",
     "multer": "^2.0.1",
     "nodemon": "^3.1.10",
-    "ts-jest": "^29.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "ws": "^8.18.2"
