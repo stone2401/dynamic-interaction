@@ -7,6 +7,7 @@ import http from 'http';
 import path from 'path';
 import { PORT } from '../config';
 import { logger } from '../logger';
+import { serverStateManager } from './serverState';
 
 // 创建 Express 应用实例
 export const app = express();
@@ -26,11 +27,21 @@ export function configureExpress(): void {
  * @returns 启动成功的 Promise
  */
 export async function startExpressServer(): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    server.listen(PORT, () => {
-      logger.info(`服务器已启动，监听地址: http://localhost:${PORT}`);
-      resolve();
-    });
-    server.on('error', reject);
-  });
+  // 如果服务器已经在运行，直接返回
+  if (serverStateManager.state === 'running' || serverStateManager.state === 'starting') {
+    logger.info('服务器已经在运行或正在启动中');
+    return;
+  }
+
+  // 使用服务器状态管理器启动服务器
+  return serverStateManager.startServer();
+}
+
+/**
+ * 停止 HTTP 服务器
+ * @param immediate 是否立即停止，不等待延迟
+ * @returns 停止成功的 Promise
+ */
+export async function stopExpressServer(immediate: boolean = false): Promise<void> {
+  return serverStateManager.stopServer(immediate);
 }

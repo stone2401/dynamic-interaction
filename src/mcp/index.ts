@@ -8,7 +8,10 @@ import { MCP_CONFIG, SESSION_TIMEOUT, TIMEOUT_PROMPT } from '../config';
 import { solicitUserInput } from './solicit-input';
 import { logger } from '../logger';
 import { z } from 'zod';
-import { WebSocketTransport } from "../server/websocketTransport";
+import { serverStateManager } from '../server/serverState';
+import { startExpressServer } from '../server/express';
+import { freePortIfOccupied } from '../server/port';
+import { PORT } from '../config';
 
 // 创建 MCP 服务器实例
 export const mcpServer = new McpServer({
@@ -59,6 +62,26 @@ export function configureMcpServer(): void {
         async ({ summary, project_directory, timeout }) => {
             logger.info(`MCP: 请求用户输入。项目目录: ${project_directory}, 摘要: ${summary}`);
             try {
+                // 检查HTTP服务器是否已启动，如果未启动则启动它
+                if (serverStateManager.state === 'stopped') {
+                    logger.info('HTTP服务器未启动，正在启动...');
+                    try {
+                        await freePortIfOccupied(PORT);
+                        await startExpressServer();
+                        logger.info(`HTTP服务器已懒启动，监听地址: http://localhost:${PORT}`);
+                    } catch (error) {
+                        logger.error('启动HTTP服务器失败:', error);
+                        return {
+                            content: [
+                                {
+                                    type: "error",
+                                    text: `启动HTTP服务器失败: ${error instanceof Error ? error.message : String(error)}`,
+                                },
+                            ],
+                        };
+                    }
+                }
+
                 // 调用实际的 solicitUserInput 函数，与前端 UI 建立会话并等待反馈
                 const feedback = await solicitUserInput(project_directory, summary);
 

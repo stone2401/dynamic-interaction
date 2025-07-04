@@ -3,7 +3,7 @@
  * 此模块现在负责调用服务器来启动用户交互，并等待结果。
  */
 
-import { requestFeedbackSession, activeSockets } from '../server/websocket'; // 从服务器模块导入
+import { connectionManager, requestFeedbackSession } from '../server/websocket'; // 从服务器模块导入
 import { UserFeedback } from '../types/feedback'; // 引入共用的用户反馈类型定义
 import { PORT } from '../config'; // 新增：导入 PORT
 import { logger } from '../logger';
@@ -22,10 +22,10 @@ export async function solicitUserInput(
 ): Promise<UserFeedback> {
 
     const url = `http://localhost:${PORT}`;
-    
+
     // 检查是否有活动的WebSocket连接
-    const hasActiveConnections = activeSockets.size > 0;
-    
+    const hasActiveConnections = connectionManager.getActiveConnectionCount() > 0;
+
     if (!hasActiveConnections) {
         // 仅在没有活动连接时才打开新的浏览器窗口
         logger.info(`MCP: 没有活动的WebSocket连接，指导用户在浏览器中打开: ${url}`);
@@ -36,9 +36,9 @@ export async function solicitUserInput(
             logger.warn(`MCP: 自动打开浏览器失败，请用户手动访问: ${url}`);
         }
     } else {
-        logger.info(`MCP: 检测到${activeSockets.size}个活动WebSocket连接，复用现有连接`);
+        logger.info(`MCP: 检测到${connectionManager.getActiveConnectionCount()}个活动WebSocket连接，复用现有连接`);
     }
-    
+
     const feedbackPromise = requestFeedbackSession(summary, projectDirectory);
     try {
         const feedback = await feedbackPromise;

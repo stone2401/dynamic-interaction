@@ -11,7 +11,7 @@
 **主要组成部分：**
 
 *   **后端 (Node.js/Express)**：
-    *   **HTTP 服务器**：提供静态文件服务，用于加载前端页面。
+    *   **HTTP 服务器**：提供静态文件服务，用于加载前端页面。采用懒启动机制，仅在MCP调用时启动，所有WebSocket连接关闭后自动关闭，避免多实例端口冲突。
     *   **WebSocket 服务器**：实现前后端实时双向通信，用于传输 AI 摘要、日志、系统信息以及接收用户反馈和命令。
     *   **MCP 服务器**：通过标准输入/输出 (stdio) 与外部 AI 模型（如 Windsurf AI Agent）进行通信，实现 AI 工具调用和结果回传。
     *   **会话管理**：管理用户与 AI 代理之间的会话生命周期，包括请求队列和超时处理。
@@ -61,6 +61,7 @@ src/                   # 源代码目录
 └── server/            # 后端服务器相关模块
     ├── express.ts     # Express HTTP 服务器配置
     ├── port.ts        # 端口管理工具
+    ├── serverState.ts # HTTP服务器状态管理器
     ├── sessionManager.ts # WebSocket 会话管理器
     ├── sessionQueue.ts  # 会话请求队列
     ├── websocket.ts     # WebSocket 服务器配置
@@ -71,12 +72,12 @@ src/                   # 源代码目录
 
 ### `src/index.ts`
 
-*   **功能**：应用程序的入口文件，负责初始化和启动 Express HTTP 服务器、WebSocket 服务器和 MCP 服务器。它处理端口冲突和启动错误，确保应用程序正常运行。
+*   **功能**：应用程序的入口文件，负责初始化和启动 MCP 服务器。采用懒启动机制，仅在需要时启动 Express HTTP 服务器和 WebSocket 服务器。
 *   **核心逻辑**：
     *   导入配置 (`config`) 和日志 (`logger`)。
-    *   初始化 `expressApp` 和 `websocketServer`。
+    *   初始化 `expressApp` 和 `websocketServer`，但不立即启动HTTP服务器。
     *   初始化 `mcpServer` 并注册 `solicit-input` 工具。
-    *   使用 `checkPortAndListen` 确保服务器在可用端口上启动。
+    *   仅启动MCP服务器，HTTP服务器将在首次调用MCP工具时懒启动。
 
 ### `src/config.ts`
 
@@ -108,17 +109,20 @@ src/                   # 源代码目录
 *   **功能**：实现 `solicit-input` MCP 工具的具体逻辑。该工具通过 WebSocket 与前端交互，弹出一个 Web UI 界面来收集用户的多模态反馈（文本和图片）。
 *   **核心逻辑**：
     *   包含 `solicitUserInput` 函数，负责向前端发送请求，等待用户反馈。
+    *   在首次调用时检查并启动HTTP服务器（懒启动机制）。
     *   利用 `sessionQueue` 管理反馈请求，确保请求的可靠性和超时处理。
     *   支持在浏览器中打开指定 URL。
 
 ### `src/server/websocket.ts`
 
-*   **功能**：配置和管理 WebSocket 服务器。它处理客户端连接、消息路由、会话管理以及与 `solicit-input` 工具的集成。
+*   **功能**：配置和管理 WebSocket 服务器。它处理客户端连接、消息路由、会话管理以及与 `solicit-input` 工具的集成。支持HTTP服务器懒启动机制。
 *   **核心逻辑**：
-    *   初始化 `ws` (WebSocket) 服务器。
+    *   初始化 `ws` (WebSocket) 服务器，配置为 `noServer: true` 以支持懒启动。
+    *   通过 `ConnectionManager` 单例类统一管理WebSocket连接生命周期。
     *   处理 `connection` 事件，为每个新连接创建会话。
     *   处理 `message` 事件，解析客户端消息（如 `submit_feedback`, `command`, `ping`, `get_system_info`）。
     *   与 `sessionManager` 和 `sessionQueue` 协作，管理会话状态和反馈请求。
+    *   监控连接数量，当所有连接关闭时通知 `serverStateManager` 检查是否应关闭HTTP服务器。
 
 ### `src/server/sessionQueue.ts`
 
@@ -134,16 +138,18 @@ src/                   # 源代码目录
 *   **功能**：管理 WebSocket 会话的生命周期。它负责创建、维护和销毁会话，处理会话中的消息、超时、关闭和错误，确保会话状态的一致性。
 *   **核心逻辑**：
     *   `SessionManager` 类维护一个活跃会话的映射。
-    *   `createSession` 创建新会话，`getSession` 获取会话。
+    *   `startSession` 创建新会话，`endSession` 结束会话。
     *   处理会话的 `message`, `close`, `error` 事件。
+    *   会话结束时检查连接状态，尝试分配新会话或通知 `serverStateManager` 检查是否应关闭HTTP服务器。
     *   集成 `sessionQueue` 和 `mcpServer`，将用户反馈传递给 AI 代理。
 
 ### `src/server/express.ts`
 
-*   **功能**：配置 Express HTTP 服务器。它主要用于提供前端静态文件服务，确保前端页面能够被正确加载。
+*   **功能**：配置 Express HTTP 服务器。它主要用于提供前端静态文件服务，确保前端页面能够被正确加载。支持懒启动和停止机制。
 *   **核心逻辑**：
     *   创建 Express 应用实例。
     *   使用 `express.static` 中间件服务 `src/public` 目录下的静态文件。
+    *   提供 `startServer` 和 `stopServer` 方法，由 `serverStateManager` 调用以实现懒启动和自动关闭。
 
 ### `src/server/port.ts`
 
@@ -237,6 +243,21 @@ src/                   # 源代码目录
     *   处理命令输入框的 `Enter` 键事件和执行按钮的点击事件。
 
 ## 6. 核心机制与交互
+
+### HTTP服务器懒启动机制
+
+*   **目的**：避免多实例运行时的端口冲突，优化资源使用。
+*   **工作流程**：
+    *   **应用启动**：仅启动MCP服务器，不启动HTTP服务器。
+    *   **首次调用**：当AI代理首次调用 `solicit-input` 工具时，检查HTTP服务器状态，如未启动则启动。
+    *   **连接监控**：`ConnectionManager` 跟踪所有WebSocket连接，`SessionManager` 管理会话状态。
+    *   **自动关闭**：当所有WebSocket连接关闭且没有活跃会话时，HTTP服务器自动关闭，释放端口资源。
+    *   **状态管理**：`serverStateManager` 单例类负责管理HTTP服务器的状态（`STOPPED`, `STARTING`, `RUNNING`, `STOPPING`）。
+*   **关键组件**：
+    *   `src/server/serverState.ts`：服务器状态管理器，控制HTTP服务器的生命周期。
+    *   `src/server/websocket.ts`：连接管理器，跟踪WebSocket连接状态。
+    *   `src/server/sessionManager.ts`：会话管理器，跟踪活跃会话状态。
+    *   `src/mcp/index.ts`：在 `solicit-input` 工具中实现懒启动检查。
 
 ### WebSocket 通信流
 
