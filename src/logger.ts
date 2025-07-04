@@ -7,74 +7,103 @@ import * as winston from 'winston';
 import * as path from 'path';
 import * as fs from 'fs';
 import { LOG_CONFIG } from './config';
-import { WebSocketTransport } from './server/websocketTransport';
+import { WebSocketTransport, setWebSocketServer as originalSetWebSocketServer } from './server/websocketTransport';
 import DailyRotateFile from 'winston-daily-rotate-file';
+import { WebSocketServer } from 'ws';
 
-// 确保日志目录存在
-const logDir = path.isAbsolute(LOG_CONFIG.dir)
-    ? LOG_CONFIG.dir
-    : path.join(process.cwd(), LOG_CONFIG.dir);
+let logger: winston.Logger;
+let setWebSocketServer: (server: WebSocketServer) => void;
 
-// 确保日志目录存在
-if (LOG_CONFIG.fileLogging && !fs.existsSync(logDir)) {
-    try {
-        fs.mkdirSync(logDir, { recursive: true });
-    } catch (error) {
-        console.error(`Failed to create log directory: ${logDir}`, error);
+if (!LOG_CONFIG.enabled) {
+    // 如果日志系统被禁用，创建一个静默的 logger
+    logger = winston.createLogger({
+        transports: [new winston.transports.Console({ silent: true })]
+    });
+    console.log('日志系统已禁用，WebSocket 日志传输将不会被初始化。');
+    // 当禁用时，提供一个空操作函数
+    setWebSocketServer = (_server: WebSocketServer) => { /* do nothing */ };
+} else {
+    // 确保日志目录存在
+    let logDir = LOG_CONFIG.dir;
+
+    if (LOG_CONFIG.fileLogging) {
+        try {
+            if (!fs.existsSync(logDir)) {
+                fs.mkdirSync(logDir, { recursive: true });
+            }
+        } catch (error) {
+            console.warn(`无法创建日志目录: ${logDir}，将使用临时目录`, error);
+            try {
+                const os = require('os');
+                logDir = path.join(os.tmpdir(), 'dynamic-interaction-logs');
+                if (!fs.existsSync(logDir)) {
+                    fs.mkdirSync(logDir, { recursive: true });
+                }
+                console.info(`已切换到临时日志目录: ${logDir}`);
+            } catch (fallbackError) {
+                console.error(`无法创建临时日志目录，将禁用文件日志`, fallbackError);
+                LOG_CONFIG.fileLogging = false;
+            }
+        }
     }
+
+    // 准备传输器列表
+    const transports: winston.transport[] = [
+        new winston.transports.Console({
+            format: winston.format.combine(
+                LOG_CONFIG.colorize ? winston.format.colorize() : winston.format.simple(),
+                winston.format.simple()
+            ),
+        }),
+        new WebSocketTransport(),
+    ];
+
+    if (LOG_CONFIG.fileLogging) {
+        try {
+            transports.push(
+                new DailyRotateFile({
+                    filename: path.join(logDir, LOG_CONFIG.combinedFile),
+                    datePattern: 'YYYY-MM-DD',
+                    zippedArchive: true,
+                    maxSize: '20m',
+                    maxFiles: '14d',
+                    handleExceptions: true,
+                }) as unknown as winston.transport,
+                new DailyRotateFile({
+                    filename: path.join(logDir, LOG_CONFIG.errorFile),
+                    datePattern: 'YYYY-MM-DD',
+                    zippedArchive: true,
+                    maxSize: '20m',
+                    maxFiles: '14d',
+                    level: 'error',
+                    handleExceptions: true,
+                }) as unknown as winston.transport
+            );
+        } catch (error) {
+            console.error('添加文件日志传输器失败，将只使用控制台日志', error);
+        }
+    }
+
+    logger = winston.createLogger({
+        level: LOG_CONFIG.level,
+        format: winston.format.combine(
+            winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+            winston.format.errors({ stack: true }),
+            winston.format.splat(),
+            winston.format.json()
+        ),
+        transports,
+        exitOnError: false,
+    });
+
+    // 当启用时，使用原始函数
+    setWebSocketServer = originalSetWebSocketServer;
+
+    logger.info('日志系统已初始化', {
+        logLevel: LOG_CONFIG.level,
+        logDir: LOG_CONFIG.fileLogging ? logDir : 'disabled',
+        fileLogging: LOG_CONFIG.fileLogging,
+    });
 }
 
-// 创建基础控制台传输
-const consoleTransport = new winston.transports.Console({
-    format: winston.format.combine(
-        LOG_CONFIG.colorize ? winston.format.colorize() : winston.format.simple(),
-        winston.format.simple()
-    ),
-});
-
-
-
-// 创建 logger 实例
-export const logger = winston.createLogger({
-    level: LOG_CONFIG.level,
-    format: winston.format.combine(
-        winston.format.timestamp({
-            format: 'YYYY-MM-DD HH:mm:ss'
-        }),
-        winston.format.errors({ stack: true }),
-        winston.format.splat(),
-        winston.format.json()
-    ),
-    transports: [
-        consoleTransport,
-        new WebSocketTransport(),
-        new DailyRotateFile({
-            filename: path.join(logDir, LOG_CONFIG.combinedFile),
-            datePattern: 'YYYY-MM-DD',
-            zippedArchive: true,
-            maxSize: '20m',
-            maxFiles: '14d'
-        }),
-        new DailyRotateFile({
-            filename: path.join(logDir, LOG_CONFIG.errorFile),
-            datePattern: 'YYYY-MM-DD',
-            zippedArchive: true,
-            maxSize: '20m',
-            maxFiles: '14d'
-        }),
-
-    ],
-    exitOnError: false // 防止程序因日志错误而崩溃
-});
-
-// 导出 WebSocketTransport 的设置函数，方便其他模块使用
-export { setWebSocketServer } from './server/websocketTransport';
-
-// 记录日志系统启动信息
-logger.info('Logger initialized', {
-    logLevel: LOG_CONFIG.level,
-    logDir: logDir,
-    fileLogging: LOG_CONFIG.fileLogging,
-    errorLogFile: LOG_CONFIG.fileLogging ? path.join(logDir, LOG_CONFIG.errorFile) : 'disabled',
-    combinedLogFile: LOG_CONFIG.fileLogging ? path.join(logDir, LOG_CONFIG.combinedFile) : 'disabled'
-});
+export { logger, setWebSocketServer };

@@ -1,6 +1,6 @@
 import { WebSocket, WebSocketServer } from 'ws';
 import { Server } from 'http';
-import { logger } from '../logger';
+import { logger, setWebSocketServer } from '../logger';
 import { sessionManager } from './sessionManager';
 import { sessionQueue } from './sessionQueue';
 import { serverStateManager } from './serverState';
@@ -48,6 +48,7 @@ export const connectionManager = ConnectionManager.getInstance();
 export function configureWebSocketServer(server?: Server): void {
     if (server) {
         wss = new WebSocketServer({ server });
+        setWebSocketServer(wss); // 将 WebSocket 服务器实例传递给日志模块
         logger.info('WebSocket 服务器已附加到现有 HTTP 服务器。');
     } else if (!wss) {
         logger.info('WebSocket 服务器配置已加载，将在 HTTP 服务器启动时初始化。');
