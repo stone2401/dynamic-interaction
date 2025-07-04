@@ -41,13 +41,19 @@ class ReliableSessionQueue {
      * @param requestData Omit<PendingSessionRequest, 'id'>
      * @returns 返回新创建的请求ID
      */
-    enqueue(requestData: Omit<PendingSessionRequest, 'id'>): string {
-        logger.debug(`新会话已入队，摘要: ${requestData.summary}，项目目录: ${requestData.projectDirectory}。等待队列长度: ${this.waitingQueue.length}`);
-        const id = randomUUID();
-        const newRequest: PendingSessionRequest = { ...requestData, id };
-        this.waitingQueue.push(newRequest);
-        logger.debug(`新会话已入队，ID: ${id}。等待队列长度: ${this.waitingQueue.length}`);
-        return id;
+    enqueue(summary: string, projectDirectory: string): Promise<UserFeedback> {
+        return new Promise<UserFeedback>((resolve, reject) => {
+            const id = randomUUID();
+            const newRequest: PendingSessionRequest = {
+                id,
+                summary,
+                projectDirectory,
+                resolve,
+                reject,
+            };
+            this.waitingQueue.push(newRequest);
+            logger.debug(`新会话已入队，ID: ${id}。等待队列长度: ${this.waitingQueue.length}`);
+        });
     }
 
     /**

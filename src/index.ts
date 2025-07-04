@@ -13,6 +13,11 @@ import { configureWebSocketServer } from './server/websocket';
 import { configureMcpServer, startMcpServer } from './mcp';
 import { serverStateManager } from './server/serverState';
 
+// 导入消息处理器以确保它们被注册
+import './server/handlers/pingHandler';
+import './server/handlers/feedbackHandler';
+import './server/handlers/systemInfoHandler';
+
 /**
  * 应用程序主函数
  */

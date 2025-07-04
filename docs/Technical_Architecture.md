@@ -55,13 +55,13 @@
 
 ### `src/index.ts`
 
-*   **功能**：应用程序的入口文件，负责初始化和启动 MCP 服务器。采用懒启动机制，仅在需要时启动 Express HTTP 服务器和 WebSocket 服务器。
+*   **功能**：应用程序的入口文件，负责初始化和启动 MCP 服务器。它还负责**导入所有消息处理器**，以确保它们能被消息路由器正确注册。采用懒启动机制，仅在需要时启动 Express HTTP 服务器和 WebSocket 服务器。
 *   **核心逻辑**：导入配置和日志，初始化 `expressApp` 和 `websocketServer`，初始化 `mcpServer` 并注册 `solicit-input` 工具。HTTP 服务器将在首次调用 MCP 工具时懒启动。
 
 ### `src/config.ts`
 
 *   **功能**：定义应用程序的各项配置，如服务器端口、MCP 服务器信息、会话超时时间、日志设置等。支持通过环境变量覆盖默认值。
-*   **核心逻辑**：从环境变量或提供默认值来设置 `PORT`, `MCP_SERVER_NAME`, `MCP_SERVER_VERSION`, `SESSION_LEASE_TIMEOUT_SECONDS`, `LOG_DIR`, `LOG_LEVEL` 等。
+*   **核心逻辑**：从环境变量或提供默认值来设置 `PORT`, `MCP_SERVER_NAME`, `MCP_SERVER_VERSION`, `SESSION_TIMEOUT`, `LOG_DIR`, `LOG_LEVEL` 等。
 
 ### `src/logger.ts`
 
@@ -84,18 +84,31 @@
 
 ### `src/server/websocket.ts`
 
-*   **功能**：配置和管理 WebSocket 服务器。它处理客户端连接、消息路由、会话管理以及与 `solicit-input` 工具的集成。支持 HTTP 服务器懒启动机制。
-*   **核心逻辑**：初始化 `ws` 服务器，通过 `ConnectionManager` 管理连接生命周期。处理 `connection` 和 `message` 事件，与 `sessionManager` 和 `sessionQueue` 协作，并监控连接数量以控制 HTTP 服务器的关闭。
+*   **功能**：配置和管理 WebSocket 服务器。它处理客户端连接的建立、关闭和错误事件。**其核心职责是将收到的消息转发给 `messageRouter` 进行统一分发**，而不再直接处理任何业务逻辑。
+*   **核心逻辑**：初始化 `ws` 服务器，通过 `ConnectionManager` 管理连接生命周期。在 `connection` 事件中，为每个连接设置 `message`, `close`, `error` 事件监听器。`message` 事件将消息交由 `messageRouter` 处理，`close` 和 `error` 事件则通知 `sessionManager` 处理断开连接的逻辑。
+
+### `src/server/messageRouter.ts` (新增)
+
+*   **功能**：实现一个**单例的消息路由器**，作为后端消息处理的中心枢纽。它负责根据消息类型将收到的 WebSocket 消息路由到已注册的处理器函数。
+*   **核心逻辑**：提供 `register` 方法用于注册消息处理器，提供 `route` 方法用于根据消息的 `type` 字段查找并执行相应的处理器。这种设计将消息的分发与具体的业务逻辑处理完全解耦。
+
+### `src/server/handlers/` (新增)
+
+*   **功能**：存放所有具体的业务逻辑处理器。每个文件实现一个或多个相关消息的处理逻辑，并将其注册到 `messageRouter`。
+*   **核心模块**:
+    *   `pingHandler.ts`: 处理心跳 `ping` 请求，响应 `pong`。
+    *   `feedbackHandler.ts`: 处理 `submit_feedback` 消息，完成用户反馈的接收、处理，并结束会话。
+    *   `systemInfoHandler.ts`: 处理 `get_system_info` 请求，返回服务器状态和版本信息。
 
 ### `src/server/sessionQueue.ts`
 
 *   **功能**：实现一个可靠的会话请求队列。它支持租约机制、超时自动重试和请求去重，确保每个反馈请求都能被处理且不丢失。
-*   **核心逻辑**：`SessionQueue` 类维护一个请求队列，支持 `enqueue`, `dequeue`, `ack`, `nack` 方法，并管理请求的租约。
+*   **核心逻辑**：`ReliableSessionQueue` 类维护一个请求队列，支持 `enqueue`（入队）、`leaseNext`（租用下一个）、`acknowledge`（确认）和 `requeue`（重新入队）方法，并管理请求的租约。
 
 ### `src/server/sessionManager.ts`
 
-*   **功能**：管理 WebSocket 会话的生命周期。它负责创建、维护和销毁会话，处理会话中的消息、超时、关闭和错误，确保会话状态的一致性。
-*   **核心逻辑**：`SessionManager` 类维护活跃会话，处理会话事件，并与 `sessionQueue` 和 `mcpServer` 协作。
+*   **功能**：管理**会话上下文 (`SessionContext`)** 的生命周期。它负责创建、维护和销毁会话状态，但**不再直接处理 WebSocket 消息或事件**。
+*   **核心逻辑**：`SessionManager` 类维护一个从 WebSocket 连接到 `SessionContext` 的映射。提供 `startSession`、`endSession` 和 `handleDisconnection` 方法来管理会话状态。它与 `sessionQueue` 协作，在有可用连接时启动新会话。
 
 ### `src/server/express.ts`
 
@@ -177,17 +190,16 @@
 ### WebSocket 通信流
 
 *   **前端到后端**：
-    *   **用户反馈**：`feedback.ts` 收集用户输入和图片数据，通过 `websocket.ts` 发送 `submit_feedback` 消息。
-    *   **命令执行**：`commands.ts` 发送 `command` 消息。
-    *   **心跳**：`statusBar.ts` 定期发送 `ping` 消息。
-    *   **系统信息请求**：`websocket.ts` 发送 `get_system_info` 消息。
+    *   所有来自前端的消息（如 `submit_feedback`, `ping`, `get_system_info`）都由 `websocket.ts` 接收。
+    *   `websocket.ts` **不解析消息内容**，而是直接将消息和 WebSocket 连接实例传递给 `messageRouter.route()` 方法。
+    *   `messageRouter` 根据消息的 `type` 字段，调用在相应 `handler`（例如 `feedbackHandler`）中预先注册的处理函数。
 *   **后端到前端**：
     *   **AI 摘要**：后端通过 WebSocket 发送 `summary` 消息。
     *   **实时日志**：`websocketTransport.ts` 将日志作为 `server_log` 消息推送。
-    *   **系统信息**：后端响应 `get_system_info` 请求，发送 `system_info` 消息。
-    *   **反馈状态**：后端处理完用户反馈后，发送 `feedback_status` 消息。
+    *   **系统信息**：`systemInfoHandler` 响应 `get_system_info` 请求，发送 `system_info` 消息。
+    *   **反馈状态**：`feedbackHandler` 处理完用户反馈后，发送 `feedback_status` 消息。
     *   **会话超时**：如果会话达到超时，后端发送 `timeout` 消息。
-    *   **Pong 响应**：后端响应 `ping` 消息，发送 `pong` 消息。
+    *   **Pong 响应**：`pingHandler` 响应 `ping` 消息，发送 `pong` 消息。
 
 ### MCP (Model Context Protocol) 交互
 
@@ -196,8 +208,9 @@
 
 ### 会话管理
 
-*   **`sessionQueue.ts`**：确保用户反馈请求的可靠性。它是一个带租约机制的请求队列，防止请求丢失或重复处理。
-*   **`sessionManager.ts`**：管理每个 WebSocket 连接对应的会话。它负责将传入的 WebSocket 消息路由到正确的会话，并将 `solicit-input` 工具的反馈结果与对应的会话关联起来。
+*   **`sessionQueue.ts`**：作为请求的入口，确保用户反馈请求的可靠性。它是一个带租约机制的请求队列。
+*   **`sessionManager.ts`**：作为会话状态的管理者。当 `checkQueueAndProcess` 发现有可用的 WebSocket 连接和等待的请求时，`sessionManager.startSession` 会被调用，创建一个新的 `SessionContext` 并将其与 WebSocket 连接关联。当连接关闭时，`handleDisconnection` 会清理会话状态。
+*   **`messageRouter.ts`**：作为消息处理的核心。所有与会话相关的业务逻辑（如处理反馈、响应心跳）都在注册到路由器的 `handlers` 中执行。处理器可以从 `sessionManager` 获取当前会话的上下文信息。
 
 ### 日志系统
 
@@ -244,7 +257,7 @@
 *   `PORT`：指定服务器监听的端口（默认 3000）。
 *   `MCP_SERVER_NAME`：MCP 服务器的名称（默认 `mcp-feedback-enhanced`）。
 *   `MCP_SERVER_VERSION`：MCP 服务器的版本（默认 `1.0.0`）。
-*   `SESSION_LEASE_TIMEOUT_SECONDS`：会话租约超时时间（默认 600 秒）。
+*   `SESSION_TIMEOUT`：会话超时时间（默认 600 秒）。
 *   `LOG_DIR`：日志文件存放目录（默认 `logs`）。
 *   `LOG_LEVEL`：日志级别（默认 `info`）。
 

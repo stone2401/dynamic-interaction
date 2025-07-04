@@ -6,7 +6,7 @@
 import { Server } from 'http';
 import { logger } from '../logger';
 import { server } from './express';
-import { connectionManager } from './websocket';
+import { connectionManager, initializeWebSocketServer } from './websocket';
 import { sessionManager } from './sessionManager';
 import { PORT } from '../config';
 import { sessionQueue } from './sessionQueue';
@@ -82,6 +82,10 @@ class ServerStateManager {
         this._state = ServerState.RUNNING;
         this._server = server;
         logger.info(`HTTP服务器已启动，监听地址: http://localhost:${PORT}`);
+
+        // 将WebSocket服务器附加到HTTP服务器
+        initializeWebSocketServer(server);
+
         resolve();
       });
 

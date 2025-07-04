@@ -14,6 +14,7 @@
     *   **HTTP 服务器**：提供静态文件服务，用于加载前端页面。采用懒启动机制，仅在MCP调用时启动，所有WebSocket连接关闭后自动关闭，避免多实例端口冲突。
     *   **WebSocket 服务器**：实现前后端实时双向通信，用于传输 AI 摘要、日志、系统信息以及接收用户反馈和命令。
     *   **MCP 服务器**：通过标准输入/输出 (stdio) 与外部 AI 模型（如 Windsurf AI Agent）进行通信，实现 AI 工具调用和结果回传。
+    *   **消息路由**：通过中央消息路由器 (`messageRouter`) 将 WebSocket 消息分发给模块化的处理器。
     *   **会话管理**：管理用户与 AI 代理之间的会话生命周期，包括请求队列和超时处理。
     *   **日志系统**：集成 Winston 日志库，支持多种日志传输方式，包括实时 WebSocket 传输到前端。
 *   **前端 (HTML/CSS/TypeScript)**：
@@ -62,6 +63,13 @@ src/                   # 源代码目录
     ├── express.ts     # Express HTTP 服务器配置
     ├── port.ts        # 端口管理工具
     ├── serverState.ts # HTTP服务器状态管理器
+    ├── connectionManager.ts # WebSocket 连接管理器
+    ├── handlers/        # WebSocket 消息处理器
+    │   ├── index.ts       # 注册所有消息处理器
+    │   ├── commandHandler.ts # `command` 消息处理器
+    │   ├── feedbackHandler.ts # `submit_feedback` 消息处理器
+    │   └── systemInfoHandler.ts # `get_system_info` 消息处理器
+    ├── messageRouter.ts # WebSocket 消息路由器
     ├── sessionManager.ts # WebSocket 会话管理器
     ├── sessionQueue.ts  # 会话请求队列
     ├── websocket.ts     # WebSocket 服务器配置
@@ -115,33 +123,51 @@ src/                   # 源代码目录
 
 ### `src/server/websocket.ts`
 
-*   **功能**：配置和管理 WebSocket 服务器。它处理客户端连接、消息路由、会话管理以及与 `solicit-input` 工具的集成。支持HTTP服务器懒启动机制。
+*   **功能**：配置和管理 WebSocket 服务器，是所有客户端连接的入口。它负责连接生命周期管理，并将所有传入的消息分发给消息路由器进行处理。
 *   **核心逻辑**：
     *   初始化 `ws` (WebSocket) 服务器，配置为 `noServer: true` 以支持懒启动。
-    *   通过 `ConnectionManager` 单例类统一管理WebSocket连接生命周期。
-    *   处理 `connection` 事件，为每个新连接创建会话。
-    *   处理 `message` 事件，解析客户端消息（如 `submit_feedback`, `command`, `ping`, `get_system_info`）。
-    *   与 `sessionManager` 和 `sessionQueue` 协作，管理会话状态和反馈请求。
-    *   监控连接数量，当所有连接关闭时通知 `serverStateManager` 检查是否应关闭HTTP服务器。
+    *   使用 `ConnectionManager` 跟踪和管理所有活跃的 WebSocket 连接。
+    *   监听 `connection` 事件，当新客户端连接时，将其交由 `ConnectionManager` 管理。
+    *   监听 `message` 事件，将收到的原始消息传递给 `messageRouter` 进行路由和处理，自身不处理任何业务逻辑。
+    *   监听 `close` 和 `error` 事件，并委托给 `sessionManager` 处理断开连接的后续逻辑。
+    *   定期调用 `checkQueueAndProcess` 检查并处理会话请求队列。
 
 ### `src/server/sessionQueue.ts`
 
 *   **功能**：实现一个可靠的会话请求队列。它支持租约机制、超时自动重试和请求去重，确保每个反馈请求都能被处理且不丢失。
 *   **核心逻辑**：
-    *   `SessionQueue` 类维护一个请求队列，每个请求都有一个唯一的 ID 和超时时间。
-    *   `enqueue` 方法添加请求，`dequeue` 方法获取请求。
-    *   `ack` 方法确认请求完成，`nack` 方法将请求重新放回队列。
-    *   `startLeaseTimer` 和 `stopLeaseTimer` 管理请求的租约。
+    *   `ReliableSessionQueue` 类维护一个等待队列和正在处理的请求映射。
+    *   `enqueue` 方法添加新请求到等待队列。
+    *   `leaseNext` 方法从队列中获取一个请求并为其设置租约计时器。
+    *   `acknowledge` 方法确认请求已成功处理并将其从系统中移除。
+    *   `requeue` 方法在处理失败或超时时将请求重新放回等待队列。
 
 ### `src/server/sessionManager.ts`
 
-*   **功能**：管理 WebSocket 会话的生命周期。它负责创建、维护和销毁会话，处理会话中的消息、超时、关闭和错误，确保会话状态的一致性。
+*   **功能**：管理 WebSocket 会话的生命周期，是会话状态的权威来源。它不直接处理 WebSocket 消息，而是专注于会话的创建、销毁和状态转换。
 *   **核心逻辑**：
     *   `SessionManager` 类维护一个活跃会话的映射。
-    *   `startSession` 创建新会话，`endSession` 结束会话。
-    *   处理会话的 `message`, `close`, `error` 事件。
-    *   会话结束时检查连接状态，尝试分配新会话或通知 `serverStateManager` 检查是否应关闭HTTP服务器。
-    *   集成 `sessionQueue` 和 `mcpServer`，将用户反馈传递给 AI 代理。
+    *   `startSession` 创建新会话，将其与一个可用的 WebSocket 连接关联。
+    *   `endSession` 结束会话，并释放其占用的连接。
+    *   `handleDisconnection` 处理连接断开的逻辑，确保相关会话被正确清理，并检查是否需要关闭服务器。
+    *   与 `sessionQueue` 和 `mcpServer` 协作，将用户反馈传递给 AI 代理。
+
+### `src/server/messageRouter.ts`
+
+*   **功能**：实现一个单例的消息路由器，根据消息类型将传入的 WebSocket 消息分发给已注册的处理器。这是实现业务逻辑与通信层解耦的核心。
+*   **核心逻辑**：
+    *   提供 `register` 方法，允许不同的消息处理器注册自己来响特定类型的消息。
+    *   提供 `route` 方法，接收来自 `websocket.ts` 的原始消息，解析消息类型，并调用相应的处理器。
+    *   如果找不到处理器，会记录错误日志。
+
+### `src/server/handlers/`
+
+*   **功能**：存放所有模块化的消息处理器。每个处理器负责一种特定类型的消息，使其逻辑内聚且易于维护。
+*   **核心逻辑**：
+    *   `index.ts`：导入所有处理器并调用它们的注册函数，确保在应用启动时所有处理器都已在 `messageRouter` 中注册。
+    *   `feedbackHandler.ts`：处理 `submit_feedback` 消息，负责将用户反馈传递给 `sessionManager`。
+    *   `commandHandler.ts`：处理 `command` 消息。
+    *   `systemInfoHandler.ts`：处理 `get_system_info` 请求。
 
 ### `src/server/express.ts`
 
@@ -313,7 +339,7 @@ src/                   # 源代码目录
 *   `PORT`：指定服务器监听的端口（默认 3000）。
 *   `MCP_SERVER_NAME`：MCP 服务器的名称（默认 `mcp-feedback-enhanced`）。
 *   `MCP_SERVER_VERSION`：MCP 服务器的版本（默认 `1.0.0`）。
-*   `SESSION_LEASE_TIMEOUT_SECONDS`：会话租约超时时间（默认 600 秒）。
+*   `SESSION_TIMEOUT`：会话租约超时时间（默认 600 秒）。
 *   `LOG_DIR`：日志文件存放目录（默认 `logs`）。
 *   `LOG_LEVEL`：日志级别（默认 `info`）。
 

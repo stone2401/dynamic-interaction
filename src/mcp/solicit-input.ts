@@ -3,7 +3,8 @@
  * 此模块现在负责调用服务器来启动用户交互，并等待结果。
  */
 
-import { connectionManager, requestFeedbackSession } from '../server/websocket'; // 从服务器模块导入
+import { connectionManager, checkQueueAndProcess } from '../server/websocket';
+import { sessionQueue } from '../server/sessionQueue';
 import { UserFeedback } from '../types/feedback'; // 引入共用的用户反馈类型定义
 import { PORT } from '../config'; // 新增：导入 PORT
 import { logger } from '../logger';
@@ -39,8 +40,9 @@ export async function solicitUserInput(
         logger.info(`MCP: 检测到${connectionManager.getActiveConnectionCount()}个活动WebSocket连接，复用现有连接`);
     }
 
-    const feedbackPromise = requestFeedbackSession(summary, projectDirectory);
     try {
+        const feedbackPromise = sessionQueue.enqueue(summary, projectDirectory);
+        checkQueueAndProcess(); // 触发队列处理
         const feedback = await feedbackPromise;
         logger.debug('MCP: 从服务器收到反馈:', feedback);
         return feedback;
