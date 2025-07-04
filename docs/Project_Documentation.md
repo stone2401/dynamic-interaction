@@ -1,103 +1,35 @@
-# 项目说明文档
+# 项目文档
 
-## 1. 项目概述
+欢迎来到动态交互项目的文档中心。本文档旨在为不同角色的使用者提供清晰、全面的项目信息。
 
-本项目是一个基于 Node.js 的交互式 AI 代理系统，旨在提供一个 Web UI 界面，使用户能够与 AI 模型进行多模态（文本和图片）交互，并实时接收 AI 的工作摘要和日志输出。其核心目标是实现 AI 代理与用户之间的高效、可靠的双向通信和反馈机制。
+## 文档结构
 
-## 2. 架构概览
+为了提高文档的可读性和可维护性，我们将文档拆分成了多个独立的部分，每个部分都针对特定的受众和主题。
 
-项目采用前后端分离的架构，并通过 WebSocket 实现实时通信。后端基于 Node.js 和 Express 框架，负责处理业务逻辑、管理 WebSocket 连接、与 MCP (Model Context Protocol) 服务器交互以及日志管理。前端则是一个纯静态的 Web 页面，通过 TypeScript 编写的客户端脚本与后端进行通信，并提供用户界面。
+*   **[架构概览](./architecture-overview.md)**
+    *   **内容**: 系统的高层级架构、核心功能、关键技术栈和未来的扩展性考虑。
+    *   **目标受众**: 架构师、技术负责人、新加入的开发人员。
 
-**主要组成部分：**
+*   **[组件详细说明](./component-details.md)**
+    *   **内容**: 前端和后端各个模块的详细设计、功能说明和核心逻辑。
+    *   **目标受众**: 开发人员、维护人员。
 
-*   **后端 (Node.js/Express)**：
-    *   **HTTP 服务器**：提供静态文件服务，用于加载前端页面。采用懒启动机制，仅在MCP调用时启动，所有WebSocket连接关闭后自动关闭，避免多实例端口冲突。
-    *   **WebSocket 服务器**：实现前后端实时双向通信，用于传输 AI 摘要、日志、系统信息以及接收用户反馈和命令。
-    *   **MCP 服务器**：通过标准输入/输出 (stdio) 与外部 AI 模型（如 Windsurf AI Agent）进行通信，实现 AI 工具调用和结果回传。
-    *   **消息路由**：通过中央消息路由器 (`messageRouter`) 将 WebSocket 消息分发给模块化的处理器。
-    *   **会话管理**：管理用户与 AI 代理之间的会话生命周期，包括请求队列和超时处理。
-    *   **日志系统**：集成 Winston 日志库，支持多种日志传输方式，包括实时 WebSocket 传输到前端。
-*   **前端 (HTML/CSS/TypeScript)**：
-    *   **主页面 (`index.html`)**：定义页面结构，引入样式和脚本。
-    *   **客户端脚本**：处理用户界面交互、WebSocket 通信、图片处理、状态显示和命令发送。
-    *   **第三方库**：使用 `marked.js` 进行 Markdown 渲染，`highlight.js` 进行代码高亮，`lucide` 提供图标。
+*   **[交互流程](./interaction-flow.md)**
+    *   **内容**: AI 代理、MCP 服务、后端和前端之间的详细数据流和交互时序。
+    *   **目标受众**: 需要理解系统内部工作流程的开发人员。
 
-## 3. 目录结构
+*   **[API 参考](./api-reference.md)**
+    *   **内容**: WebSocket API 的消息格式、MCP 工具的接口定义和使用方法。
+    *   **目标受众**: API 使用者、前端开发人员、集成开发人员。
 
-```
-.windsurf/             # Windsurf 相关的配置和工作流
-docs/                  # 项目文档 (本文档)
-logs/                  # 应用日志
-src/                   # 源代码目录
-├── cli.ts             # 命令行入口
-├── config.ts          # 应用配置
-├── index.ts           # 应用主入口，启动服务器
-├── logger.ts          # 日志配置和管理
-├── mcp/               # MCP (Model Context Protocol) 相关模块
-│   ├── index.ts       # MCP 服务器初始化和工具注册
-│   └── solicit-input.ts # MCP solicit-input 工具实现
-├── public/            # 前端静态资源
-│   ├── css/           # 样式文件
-│   │   └── main.css
-│   ├── js/            # 编译后的 JavaScript 文件
-│   │   ├── commands.js
-│   │   ├── feedback.js
-│   │   ├── imageHandler.js
-│   │   ├── main.js
-│   │   ├── statusBar.js
-│   │   ├── theme.js
-│   │   ├── ui.js
-│   │   └── websocket.js
-│   ├── ts/            # 前端 TypeScript 源代码
-│   │   ├── commands.ts
-│   │   ├── feedback.ts
-│   │   ├── imageHandler.ts
-│   │   ├── main.ts
-│   │   ├── statusBar.ts
-│   │   ├── theme.ts
-│   │   ├── types.d.ts
-│   │   ├── ui.ts
-│   │   └── websocket.ts
-│   └── index.html     # 前端主页面
-└── server/            # 后端服务器相关模块
-    ├── express.ts     # Express HTTP 服务器配置
-    ├── port.ts        # 端口管理工具
-    ├── serverState.ts # HTTP服务器状态管理器
-    ├── connectionManager.ts # WebSocket 连接管理器
-    ├── handlers/        # WebSocket 消息处理器
-    │   ├── index.ts       # 注册所有消息处理器
-    │   ├── commandHandler.ts # `command` 消息处理器
-    │   ├── feedbackHandler.ts # `submit_feedback` 消息处理器
-    │   └── systemInfoHandler.ts # `get_system_info` 消息处理器
-    ├── messageRouter.ts # WebSocket 消息路由器
-    ├── sessionManager.ts # WebSocket 会话管理器
-    ├── sessionQueue.ts  # 会话请求队列
-    ├── websocket.ts     # WebSocket 服务器配置
-    └── websocketTransport.ts # Winston WebSocket 日志传输
-```
+*   **[部署指南](./deployment-guide.md)**
+    *   **内容**: 项目的安装、配置、构建和部署步骤，以及可用的环境变量。
+    *   **目标受-众**: 运维人员、系统管理员。
 
-## 4. 后端模块分析
+## 如何使用
 
-### `src/index.ts`
+我们建议您根据自己的角色和需求，选择阅读相应的文档。如果您是第一次接触本项目，建议从 **[架构概览](./architecture-overview.md)** 开始，以建立对项目的整体理解。
 
-*   **功能**：应用程序的入口文件，负责初始化和启动 MCP 服务器。采用懒启动机制，仅在需要时启动 Express HTTP 服务器和 WebSocket 服务器。
-*   **核心逻辑**：
-    *   导入配置 (`config`) 和日志 (`logger`)。
-    *   初始化 `expressApp` 和 `websocketServer`，但不立即启动HTTP服务器。
-    *   初始化 `mcpServer` 并注册 `solicit-input` 工具。
-    *   仅启动MCP服务器，HTTP服务器将在首次调用MCP工具时懒启动。
-
-### `src/config.ts`
-
-*   **功能**：定义应用程序的各项配置，如服务器端口、MCP 服务器信息、会话超时时间、日志设置等。支持通过环境变量覆盖默认值。
-*   **核心逻辑**：从环境变量或提供默认值来设置 `PORT`, `MCP_SERVER_NAME`, `MCP_SERVER_VERSION`, `SESSION_LEASE_TIMEOUT_SECONDS`, `LOG_DIR`, `LOG_LEVEL` 等。
-
-### `src/logger.ts`
-
-*   **功能**：实现全局日志系统，基于 `winston` 库。支持控制台、文件、每日轮转文件以及自定义的 WebSocket 传输方式，将日志实时广播到所有连接的前端客户端。
-*   **核心逻辑**：
-    *   创建 `winston` 日志实例，配置不同的传输器 (`transports`)。
-    *   包含一个自定义的 `WebSocketTransport`，用于通过 WebSocket 发送日志。
     *   确保日志目录存在。
 
 ### `src/cli.ts`
