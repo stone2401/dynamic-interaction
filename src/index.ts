@@ -6,12 +6,10 @@
  */
 
 import { PORT } from './config';
-import { freePortIfOccupied } from './server/port';
 import { configureExpress } from './server/express';
 import { logger } from './logger';
 import { configureWebSocketServer } from './server/websocket';
 import { configureMcpServer, startMcpServer } from './mcp';
-import { serverStateManager } from './server/serverState';
 
 // 导入消息处理器以确保它们被注册
 import './server/handlers/pingHandler';
@@ -31,7 +29,6 @@ async function main() {
 
     // 3. 仅启动 MCP 服务器，HTTP 服务器将在需要时懒启动
     try {
-        await freePortIfOccupied(PORT);
         await startMcpServer();
         logger.info('MCP 服务器已成功启动。HTTP 服务器将在需要时启动。');
     } catch (error: unknown) { // Explicitly type error as unknown
