@@ -1,8 +1,10 @@
 /* 状态栏样式 - 苹果风格设计（内容区顶部集成版） */
 
 .status-bar-container {
-    width: 85vw; /* 使用视口宽度 */
-    max-width: 1800px; /* 增加最大宽度 */
+    width: 80vw;
+    /* 使用视口宽度 */
+    max-width: 1800px;
+    /* 增加最大宽度 */
     box-sizing: border-box;
 }
 
@@ -35,7 +37,8 @@
 }
 
 .status-item.session-timer {
-    display: none; /* 默认隐藏，由JS控制显示 */
+    display: none;
+    /* 默认隐藏，由JS控制显示 */
 }
 
 .status-item {
@@ -126,8 +129,10 @@
 }
 
 .status-pulse.reconnecting {
-    background-color: #ff9500; /* Use orange for reconnecting */
-    animation: pulse 1s infinite; /* Faster pulse for reconnecting */
+    background-color: #ff9500;
+    /* Use orange for reconnecting */
+    animation: pulse 1s infinite;
+    /* Faster pulse for reconnecting */
 }
 
 @keyframes pulse {
@@ -215,9 +220,11 @@
     0% {
         opacity: 0.7;
     }
+
     50% {
         opacity: 1;
     }
+
     100% {
         opacity: 0.7;
     }
@@ -228,6 +235,7 @@
         transform: scale(1.1);
         box-shadow: 0 0 12px rgba(52, 199, 89, 0.5);
     }
+
     100% {
         transform: scale(1);
         box-shadow: none;
