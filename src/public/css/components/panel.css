@@ -31,23 +31,3 @@
     overflow-y: auto;
     padding-right: 10px;
 }
-
-/* Custom Scrollbar for Summary Panel */
-#summary::-webkit-scrollbar {
-    width: 8px;
-}
-
-#summary::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-#summary::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    border: 2px solid transparent;
-    background-clip: content-box;
-}
-
-#summary::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}

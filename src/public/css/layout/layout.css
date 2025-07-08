@@ -3,7 +3,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 40px 20px;
+    justify-content: center; /* 垂直居中 */
+    padding: 20px;
     gap: 20px;
     box-sizing: border-box;
     min-height: 100vh;
@@ -12,8 +13,9 @@ body {
 .main-container {
     display: flex;
     gap: 24px;
-    width: 100%;
-    max-width: 1350px;
+    width: 85vw; /* 使用视口宽度 */
+    max-width: 1800px; /* 增加最大宽度 */
+    max-height: 85vh; /* 限制最大高度 */
     flex-grow: 1;
     min-height: 0; /* Prevent overflow in flex containers */
 }

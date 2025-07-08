@@ -1,8 +1,8 @@
 /* 状态栏样式 - 苹果风格设计（内容区顶部集成版） */
 
 .status-bar-container {
-    width: 100%;
-    max-width: 1350px;
+    width: 85vw; /* 使用视口宽度 */
+    max-width: 1800px; /* 增加最大宽度 */
     box-sizing: border-box;
 }
 
