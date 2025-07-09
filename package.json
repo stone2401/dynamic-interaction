@@ -47,7 +47,6 @@
     "ws": "^8.18.2"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.55.0",
     "@modelcontextprotocol/sdk": "^1.12.3",
     "dotenv": "^17.0.0",
     "open": "^9.1.0",
