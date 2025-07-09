@@ -194,42 +194,33 @@ function formatTime(totalSeconds: number): string {
  * 启动会话超时倒计时
  * @param durationSeconds 倒计时时长（秒）
  */
-export function startSessionTimer(durationSeconds: number): void {
+export function startSessionTimer(sessionStartTime: number, totalDurationSeconds: number): void {
     const timerElement = document.getElementById('session-timer');
     const timerValueElement = document.getElementById('session-timer-value');
 
     if (!timerElement || !timerValueElement) return;
 
-    // 先清除已有的定时器，防止多个定时器同时运行
-    if (sessionTimerInterval) {
-        clearInterval(sessionTimerInterval);
-        sessionTimerInterval = null;
-    }
+    stopSessionTimer(); // 先停止任何正在运行的计时器
 
-    // 立即显示计时器
-    timerElement.style.display = 'flex';
-    let remainingTime = durationSeconds;
+    const sessionEndTime = sessionStartTime + totalDurationSeconds * 1000;
 
-    const updateDisplay = () => {
-        // 先检查是否已经到零或负数
-        if (remainingTime <= 0) {
-            // 如果到零，显示00:00并清除定时器
-            timerValueElement.textContent = '00:00';
-            if (sessionTimerInterval) {
-                clearInterval(sessionTimerInterval);
-                sessionTimerInterval = null;
-            }
-            return;
+    const updateTimer = () => {
+        const now = Date.now();
+        const remainingMilliseconds = sessionEndTime - now;
+        const remainingSeconds = Math.max(0, Math.floor(remainingMilliseconds / 1000));
+
+        timerValueElement.textContent = formatTime(remainingSeconds);
+
+        if (remainingSeconds <= 0) {
+            stopSessionTimer();
+            // 可以在这里添加一个更明确的“超时”状态更新
+            updateMessageStatus('timeout');
         }
-        
-        // 显示当前时间并递减
-        timerValueElement.textContent = formatTime(remainingTime);
-        remainingTime--;
     };
 
-    // 立即更新一次，然后每秒更新一次
-    updateDisplay();
-    sessionTimerInterval = window.setInterval(updateDisplay, 1000);
+    timerElement.style.display = 'flex'; // 确保计时器可见
+    updateTimer(); // 立即更新一次
+    sessionTimerInterval = window.setInterval(updateTimer, 1000);
 }
 
 /**
@@ -245,8 +236,14 @@ export function stopSessionTimer(): void {
     const timerValueElement = document.getElementById('session-timer-value');
 
     if (timerElement && timerValueElement) {
-        timerElement.style.display = 'none';
-        timerValueElement.textContent = '--:--';
+        // 仅在非超时状态下隐藏，超时后应保持可见
+        if (messageStatus !== 'timeout') {
+            timerElement.style.display = 'none';
+            timerValueElement.textContent = '--:--';
+        } else {
+            timerElement.style.display = 'flex';
+            timerValueElement.textContent = '超时';
+        }
     }
 }
 

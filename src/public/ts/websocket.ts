@@ -15,6 +15,7 @@ interface SystemInfo {
   sessionId: string;
   serverVersion?: string;
   leaseTimeoutSeconds?: number;
+  sessionStartTime?: number; // 会话开始时间的时间戳
 }
 
 // WebSocket 变量和重连配置
@@ -53,23 +54,23 @@ function connectWebSocket() {
     summaryDiv.textContent = 'WebSocket 连接已建立，等待 AI 响应...';
     reconnectAttempts = 0; // 连接成功，重置尝试次数
 
-    // 更新连接状态并开始心跳
+    // 连接成功后，启动心跳并通知后端客户端已就绪
     if (window.statusBar) {
       window.statusBar.updateConnectionStatus('connected');
       window.statusBar.startPingInterval();
     }
 
-    // 告诉服务器客户端已准备就绪
+    // 发送客户端就绪消息，请求包含剩余时间的系统信息
     ws.send(JSON.stringify({ type: 'client_ready' }));
 
-    // 请求系统信息
-    setTimeout(requestSystemInfo, 500);
+
   };
 
   ws.onmessage = (event: MessageEvent) => {
 
     try {
       const data = JSON.parse(event.data) as WebSocketMessage;
+      console.log(data);
       switch (data.type) {
         case 'summary':
           const summaryData = data as SummaryMessage;
@@ -106,8 +107,9 @@ function connectWebSocket() {
           if (window.statusBar && data.data) {
             const sysInfo = data.data as SystemInfo;
             window.statusBar.updateSystemInfo(sysInfo);
-            if (sysInfo.leaseTimeoutSeconds && sysInfo.leaseTimeoutSeconds > 0) {
-              window.statusBar.startSessionTimer(sysInfo.leaseTimeoutSeconds);
+            // 使用新的计时器逻辑
+            if (sysInfo.sessionStartTime && sysInfo.leaseTimeoutSeconds && sysInfo.leaseTimeoutSeconds > 0) {
+              window.statusBar.startSessionTimer(sysInfo.sessionStartTime, sysInfo.leaseTimeoutSeconds);
             }
           }
           break;

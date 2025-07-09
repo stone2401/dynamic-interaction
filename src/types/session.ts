@@ -8,6 +8,7 @@ export interface PendingSessionRequest {
   id: string;
   summary: string;
   projectDirectory: string;
+  createdAt: number;
   resolve: (feedback: UserFeedback) => void;
   reject: (reason?: any) => void;
   leaseTimer?: NodeJS.Timeout;
@@ -21,4 +22,6 @@ export interface SessionContext {
   ws: WebSocket;
   request: PendingSessionRequest;
   timeoutId: NodeJS.Timeout | null;
+  startTime?: number; // 会话开始时间的时间戳
+  timeout?: number;   // 会话的完整超时时长（秒）
 }

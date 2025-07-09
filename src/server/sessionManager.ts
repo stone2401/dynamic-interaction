@@ -12,7 +12,6 @@ import { WebSocket } from 'ws';
 import { logger } from '../logger';
 import { sessionQueue } from './sessionQueue';
 import { SESSION_TIMEOUT } from '../config';
-import { checkQueueAndProcess } from './websocket';
 import { serverStateManager } from './serverState';
 import { SessionContext, PendingSessionRequest } from '../types/session';
 
@@ -40,9 +39,11 @@ class SessionManager {
 
     const session: SessionContext = {
       id: request.id,
-      ws,
-      request,
-      timeoutId: null,
+      ws: ws,
+      request: request,
+      timeoutId: null, // 初始化时没有超时计时器
+      startTime: request.createdAt, // 使用消息创建时间作为会话开始时间
+      timeout: parseInt(process.env.SESSION_TIMEOUT || '300', 10), // 存储总超时时长
     };
 
     session.timeoutId = setTimeout(() => this.onTimeout(session), SESSION_TIMEOUT * 1000);
@@ -60,6 +61,7 @@ class SessionManager {
   /**
    * 结束一个会话，清理资源。
    */
+
   public endSession(ws: WebSocket): void {
     const session = this.activeSessions.get(ws);
     if (session) {
@@ -115,13 +117,30 @@ class SessionManager {
         workspaceDirectory: session.request.projectDirectory || projectRoot,
         sessionId: session.id,
         serverVersion: process.env.npm_package_version || '1.0.0',
-        leaseTimeoutSeconds: SESSION_TIMEOUT,
+        sessionStartTime: session.startTime,
+      leaseTimeoutSeconds: session.timeout ?? SESSION_TIMEOUT,
       },
     }));
   }
 
   public getSessionByWs(ws: WebSocket): SessionContext | undefined {
     return this.activeSessions.get(ws);
+  }
+
+  /**
+   * 获取会话的剩余超时时间（秒）
+   * @param session 会话上下文
+   * @returns 剩余的秒数，如果会话无效则返回 0
+   */
+  public getSessionRemainingTime(session: SessionContext): number {
+    if (!session || !session.startTime) {
+      return 0;
+    }
+
+    const elapsedTime = Date.now() - session.startTime;
+    const remainingTime = (SESSION_TIMEOUT * 1000) - elapsedTime;
+
+    return Math.max(0, Math.floor(remainingTime / 1000));
   }
 
   public hasSession(ws: WebSocket): boolean {

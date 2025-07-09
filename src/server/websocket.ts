@@ -63,7 +63,35 @@ export function configureWebSocketServer(server?: Server): void {
             try {
                 const parsedMessage = JSON.parse(message.toString());
                 logger.debug('收到 WebSocket 消息:', parsedMessage);
-                messageRouter.route(ws, parsedMessage);
+
+                if (parsedMessage.type === 'client_ready') {
+                    const session = sessionManager.getSessionByWs(ws);
+                    if (session) {
+                        // 发送包含会话开始时间和总超时的系统信息
+                        ws.send(JSON.stringify({
+                            type: 'system_info',
+                            data: {
+                                sessionId: session.id,
+                                workspaceDirectory: session.request.projectDirectory,
+                                sessionStartTime: session.startTime, // 发送开始时间
+                                leaseTimeoutSeconds: session.timeout, // 发送总时长
+                            }
+                        }));
+                    } else {
+                        // 如果没有会话，也发送一个通用信息
+                        ws.send(JSON.stringify({
+                            type: 'system_info',
+                            data: {
+                                sessionId: '无',
+                                workspaceDirectory: '未知',
+                                leaseTimeoutSeconds: 0,
+                            }
+                        }));
+                    }
+                } else {
+                    // 将其他消息路由到相应的处理器
+                    messageRouter.route(ws, parsedMessage);
+                }
             } catch (error) {
                 logger.error('解析 WebSocket 消息失败:', error);
                 ws.send(JSON.stringify({ type: 'error', data: '无效的消息格式。' }));

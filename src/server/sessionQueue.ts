@@ -16,6 +16,7 @@ export interface PendingSessionRequest {
     id: string; // 每个请求的唯一标识符
     summary: string;
     projectDirectory: string;
+    createdAt: number; // 消息创建时间戳
     resolve: (feedback: UserFeedback) => void;
     reject: (error: any) => void;
     ws?: WebSocket; // 关联的 WebSocket 连接
@@ -48,6 +49,7 @@ class ReliableSessionQueue {
                 id,
                 summary,
                 projectDirectory,
+            createdAt: Date.now(),
                 resolve,
                 reject,
             };
