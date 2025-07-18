@@ -38,14 +38,12 @@
     "@types/multer": "^1.4.13",
     "@types/node": "^24.0.1",
     "@types/ws": "^8.18.1",
-    "@vitest/ui": "^3.2.4",
     "copyfiles": "^2.4.1",
     "express": "^5.1.0",
     "multer": "^2.0.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4",
     "ws": "^8.18.2"
   },
   "dependencies": {
