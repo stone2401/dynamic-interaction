@@ -16,6 +16,6 @@
 - [x] 4. 更新日志输出 _Requirements: R3_ _Design: MCP Callback_
   - 增加解析成功、默认 MIME 回退的日志
 
-- [ ] 5. 文档与自测 _Requirements: R1, R2, R3_ _Design: 全局_
+- [x] 5. 文档与自测 _Requirements: R1, R2, R3_ _Design: 全局_
   - 确认 `requirements.md`, `design.md` 与实现一致
   - 本地跑 lint / 单元测试确保通过
