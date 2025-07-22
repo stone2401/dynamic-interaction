@@ -48,23 +48,27 @@
 **核心功能**：
 
 *   **多模态交互**：支持用户通过文本和图片与 AI Agent 进行交互。
-*   **实时反馈**：AI Agent 的工作摘要和日志实时推送到前端。
+*   **实时双向通信**：使用 WebSocket 实现前端和后端之间的实时双向通信。
+*   **模式切换**：支持通知模式（单向通知）和交互模式（双向交互）。
+*   **浏览器通知**：使用 Web Notifications API 在标签页不活跃时显示通知，增强用户体验。
 
-## 5. 关键技术栈
+## 技术栈
 
-本项目主要基于以下关键技术构建：
+*   **后端**：Node.js, Express, TypeScript, WebSocket
+*   **前端**：TypeScript, HTML, CSS, WebSocket API, Web Notifications API
 
-*   **Node.js**：作为后端运行环境，提供高性能的 JavaScript 运行时。
-*   **Express.js**：轻量级的 Node.js Web 应用框架，用于构建后端 HTTP 和 WebSocket 服务器。
-*   **TypeScript**：JavaScript 的超集，提供了静态类型检查，增强了代码的可维护性和开发效率。
-*   **WebSocket**：实现客户端与服务器之间的全双工通信，支持实时数据传输。
-*   **Model Context Protocol (MCP)**：用于 AI Agent 与外部工具和服务进行交互的协议，本项目中用于 AI Agent 与用户界面之间的通信。
-*   **Winston**：Node.js 的日志库，提供了灵活的日志记录功能，支持多种传输方式（包括自定义的 WebSocket 传输）。
-*   **marked.js**：前端 Markdown 解析库，用于将 AI Agent 返回的 Markdown 格式内容渲染为 HTML。
-*   **highlight.js**：前端代码高亮库，用于美化代码片段的显示。
-*   **lucide**：轻量级、可定制的开源图标库，用于前端界面的图标显示。
+## 2. 模块化设计
 
-## 扩展性考虑
+系统采用模块化设计，分为以下主要模块：
+
+*   **服务器模块**：处理 HTTP 和 WebSocket 请求、静态文件服务。
+*   **消息处理模块**：处理不同类型的消息和会话请求。
+*   **会话管理模块**：管理会话生命周期和状态。
+*   **WebSocket 模块**：处理前端和后端的 WebSocket 通信。
+*   **UI 模块**：处理前端用户界面和交互。
+*   **通知服务模块**：封装 Web Notifications API，处理浏览器通知的显示和权限管理。
+
+## 3. 扩展性考虑
 
 本项目在设计时考虑了未来的扩展性，主要体现在以下几个方面：
 

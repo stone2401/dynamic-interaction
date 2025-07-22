@@ -7,6 +7,7 @@
 import { sendCompositeFeedback } from './feedback.js';
 import { processFiles, clearPreview, setupDragAndDrop, setupPasteListener } from './imageHandler.js';
 import { initializeThemeSwitcher } from './theme.js';
+import { notificationService } from './notificationService.js';
 // 导入原有的WebSocket模块
 import './websocket.js';
 
@@ -32,15 +33,15 @@ function acknowledgeNotification(): void {
   console.log('通知已确认');
   const notificationPanel = document.getElementById('notification-panel');
   const feedbackPanel = document.getElementById('feedback-panel');
-  
+
   if (notificationPanel) {
     notificationPanel.style.display = 'none';
   }
-  
+
   if (feedbackPanel) {
     feedbackPanel.style.display = 'block';
   }
-  
+
   // 发送确认消息到服务器
   const ws = (window as any).ws;
   if (ws && ws.readyState === WebSocket.OPEN) {
@@ -79,7 +80,7 @@ function initializeWebSocket(): void {
 function bindEventListeners(): void {
   const feedbackInput = document.getElementById('feedback-input') as HTMLDivElement;
   const sendFeedbackBtn = document.getElementById('send-feedback-btn') as HTMLButtonElement;
-  
+
   if (feedbackInput && sendFeedbackBtn) {
     // 发送反馈按钮事件
     sendFeedbackBtn.addEventListener('click', () => {
@@ -99,7 +100,7 @@ function bindEventListeners(): void {
   window.addEventListener('beforeunload', (e: BeforeUnloadEvent) => {
     const feedbackInput = document.getElementById('feedback-input') as HTMLDivElement;
     const imagePreviewContainer = document.getElementById('image-preview-container') as HTMLDivElement;
-    
+
     if (feedbackInput && imagePreviewContainer) {
       const hasText = feedbackInput.innerText.trim().length > 0;
       const hasImages = imagePreviewContainer.childElementCount > 0;
@@ -125,7 +126,7 @@ function initializeDragAndDrop(): void {
     // 设置拖放区域和点击上传
     setupDragAndDrop(dropZone, imagePreviewContainer);
   }
-  
+
   if (feedbackInput && imagePreviewContainer) {
     // 设置粘贴图片功能
     setupPasteListener(feedbackInput, imagePreviewContainer);
@@ -133,26 +134,50 @@ function initializeDragAndDrop(): void {
 }
 
 /**
+ * 初始化通知服务
+ */
+async function initializeNotificationService(): Promise<void> {
+  console.log('初始化通知服务...');
+
+  if (notificationService.checkSupport()) {
+    const permission = notificationService.getPermissionStatus();
+
+    if (permission === 'default') {
+      console.log('请求通知权限...');
+      const result = await notificationService.requestPermission();
+      console.log(`通知权限状态: ${result}`);
+    } else {
+      console.log(`当前通知权限状态: ${permission}`);
+    }
+  } else {
+    console.warn('当前浏览器不支持通知功能');
+  }
+}
+
+/**
  * 初始化应用程序
  */
-function initializeApp(): void {
+async function initializeApp(): Promise<void> {
   console.log('初始化交互式反馈系统...');
-  
+
   // 初始化主题切换器
   initializeThemeSwitcher();
 
   // 初始化状态管理器
   initializeStateManager();
-  
+
+  // 初始化通知服务
+  await initializeNotificationService();
+
   // 初始化WebSocket连接
   initializeWebSocket();
-  
+
   // 绑定事件监听器
   bindEventListeners();
-  
+
   // 初始化拖拽功能
   initializeDragAndDrop();
-  
+
   console.log('系统初始化完成');
 }
 

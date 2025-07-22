@@ -85,7 +85,7 @@
 
 ## 3. 前端模块设计
 
-前端负责用户界面的展示和交互，使用 TypeScript 构建，并通过 WebSocket 与后端进行实时通信。
+前端负责用户界面的展示和交互，使用 TypeScript 构建，并通过 WebSocket 与后端进行实时通信。支持浏览器通知功能，在标签页不活跃时通过 Web Notifications API 向用户提供通知。
 *   **核心逻辑**：`checkPortAndListen` 函数尝试在指定端口启动服务器，如果端口被占用则尝试下一个端口。
 
 ### `src/server/websocketTransport.ts`
@@ -105,12 +105,12 @@
 ### `src/public/ts/main.ts`
 
 *   **功能**：前端应用程序的主要入口文件，负责初始化所有前端模块并协调用户交互。
-*   **核心逻辑**：导入 `feedback.js`, `theme.js`, `imageHandler.js` 等模块。在 `initializeApp` 函数中初始化主题切换、拖放、粘贴图片功能，并设置反馈发送的事件监听。
+*   **核心逻辑**：导入 `feedback.js`, `theme.js`, `imageHandler.js`, `notificationService.js` 等模块。在 `initializeApp` 函数中初始化主题切换、拖放、粘贴图片功能，初始化通知服务，并设置反馈发送的事件监听。
 
 ### `src/public/ts/websocket.ts`
 
-*   **功能**：处理前端与后端 WebSocket 服务器的所有通信。包括建立连接、接收和发送消息、处理连接断开和重连机制。
-*   **核心逻辑**：`connectWebSocket` 函数管理 WebSocket 连接，处理 `onopen`, `onmessage`, `onclose`, `onerror` 事件。`onmessage` 处理不同类型的消息并更新 UI。实现指数退避重连机制。
+*   **功能**：处理前端与后端 WebSocket 服务器的所有通信。包括建立连接、接收和发送消息、处理连接断开和重连机制。集成了通知服务，在标签页不活跃时显示浏览器通知。
+*   **核心逻辑**：`connectWebSocket` 函数管理 WebSocket 连接，处理 `onopen`, `onmessage`, `onclose`, `onerror` 事件。`onmessage` 处理不同类型的消息并更新 UI。对于 notification 和 session_request 消息类型，在标签页不活跃时调用通知服务显示浏览器通知。实现指数退避重连机制。
 
 ### `src/public/ts/feedback.ts`
 
@@ -136,6 +136,16 @@
 
 *   **功能**：处理通用的 UI 交互，特别是图片预览模态框的显示和隐藏。
 *   **核心逻辑**：`openModal` 函数显示模态框并加载指定图片。`closeModal` 函数隐藏模态框。处理模态框的点击事件和键盘 `Escape` 键事件。
+
+### `src/public/ts/notificationService.ts`
+
+*   **功能**：封装 Web Notifications API 的核心功能，提供通知权限管理和通知显示功能。
+*   **核心逻辑**：实现单例模式的 `NotificationService` 类，提供浏览器兼容性检查、权限管理和通知显示功能。为 notification 和 session_request 消息类型提供专门的通知处理方法。
+
+### `src/public/ts/config.ts`
+
+*   **功能**：提供应用全局配置参数，包括通知相关配置和 WebSocket 配置。
+*   **核心逻辑**：定义 `NotificationConfig` 和 `WebSocketConfig` 对象，提供通知图标、显示时间、内容最大长度、标题和选项等配置参数。
 
 ### `src/public/ts/commands.ts`
 

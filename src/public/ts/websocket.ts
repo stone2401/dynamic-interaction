@@ -3,6 +3,8 @@
  * 处理与服务器的 WebSocket 连接和消息传递
  */
 import { enableFeedbackInput } from './feedback.js';
+import { notificationService } from './notificationService.js';
+import { NotificationConfig } from './config.js';
 
 // 告诉 TypeScript marked 是一个全局变量 (从CDN加载)
 declare namespace marked {
@@ -63,7 +65,8 @@ function connectWebSocket() {
     // 发送客户端就绪消息，请求包含剩余时间的系统信息
     ws.send(JSON.stringify({ type: 'client_ready' }));
 
-
+    // 检查通知权限
+    checkNotificationPermission();
   };
 
   ws.onmessage = (event: MessageEvent) => {
@@ -194,6 +197,11 @@ function connectWebSocket() {
             if (feedbackPanel) {
               feedbackPanel.style.display = 'none';
             }
+            
+            // 如果标签页不活跃，显示浏览器通知
+            if (document.hidden && notificationData.summary) {
+              notificationService.showAINotification(notificationData.summary);
+            }
           }
           break;
 
@@ -223,6 +231,11 @@ function connectWebSocket() {
             
             // 启用输入
             enableFeedbackInput();
+            
+            // 如果标签页不活跃，显示浏览器通知
+            if (document.hidden && sessionData.summary) {
+              notificationService.showSessionRequestNotification(sessionData.summary);
+            }
           }
           break;
 
@@ -332,6 +345,37 @@ export function sendFeedback(text: string, images: CustomImageData[]): boolean {
     return false;
   }
 }
+
+/**
+ * 检查通知权限
+ * 如果权限状态为默认，则请求权限
+ */
+async function checkNotificationPermission() {
+  if (notificationService.checkSupport()) {
+    const permission = notificationService.getPermissionStatus();
+    
+    if (permission === 'default') {
+      await notificationService.requestPermission();
+    }
+  }
+}
+
+// 添加页面可见性变化事件监听
+document.addEventListener('visibilitychange', () => {
+  // 当页面变为可见时，取消所有通知
+  if (!document.hidden) {
+    // 在某些浏览器中，可以通过 Notification.close() 关闭通知
+    // 但这不是标准API，所以我们不实现这个功能
+  }
+});
+
+// 添加全局函数用于通知确认
+(window as any).acknowledgeNotification = function() {
+  const notificationPanel = document.getElementById('notification-panel');
+  if (notificationPanel) {
+    notificationPanel.style.display = 'none';
+  }
+};
 
 // 初始连接
 connectWebSocket();
