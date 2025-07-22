@@ -6,6 +6,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { MCP_CONFIG, SESSION_TIMEOUT, TIMEOUT_PROMPT } from '../config';
 import { solicitUserInput, notifyUser } from './solicit-input';
+import { normalizeImageFeedback } from '../utils/image';
 import { SessionMode } from '../types/session';
 import { logger } from '../logger';
 import { z } from 'zod';
@@ -105,14 +106,19 @@ export function configureMcpServer(): void {
 
                 if (feedback.imageData) {
                     logger.debug("MCP: 收到图片反馈:", feedback.imageData);
-                    if (Array.isArray(feedback.imageData)) {
-                        feedback.imageData.forEach((img) =>
-                            content.push({ type: "image", data: img })
-                        );
-                    } else {
-                        content.push({ type: "image", data: feedback.imageData });
-                    }
-                }
+                    const datas = Array.isArray(feedback.imageData)
+                      ? feedback.imageData
+                      : [feedback.imageData];
+
+                    datas.forEach((img) => {
+                      try {
+                        const { data, mimeType } = normalizeImageFeedback(img);
+                        content.push({ type: "image", data, mimeType });
+                      } catch (e) {
+                        logger.error("图片解析失败", e);
+                      }
+                    });
+                  }
 
                 if (feedback.commandOutput) {
                     content.push({ type: "command_output", text: `命令输出: ${feedback.commandOutput}` });

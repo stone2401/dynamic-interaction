@@ -6,6 +6,7 @@
 export interface UserFeedback {
   text?: string;
   imageData?: string | string[];
+  mimeType?: string | string[];
   commandOutput?: string;
   error?: string;
 }
