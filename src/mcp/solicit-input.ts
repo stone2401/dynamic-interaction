@@ -6,20 +6,23 @@
 import { connectionManager, checkQueueAndProcess } from '../server/websocket';
 import { sessionQueue } from '../server/sessionQueue';
 import { UserFeedback } from '../types/feedback'; // 引入共用的用户反馈类型定义
+import { SessionMode } from '../types/session'; // 引入会话模式枚举
 import { PORT } from '../config'; // 新增：导入 PORT
 import { logger } from '../logger';
 
 /**
- * Agent 调用此函数来请求用户输入。
- * 它会与服务器通信，启动一个 UI 会话，并等待用户反馈。
+ * Agent 调用此函数来请求用户输入或发送通知。
+ * 它会与服务器通信，启动一个 UI 会话。
  * 如果已有活动的WebSocket连接，则复用该连接；否则打开新的浏览器窗口。
  * @param projectDirectory 需要用户审核的项目目录的绝对路径。
  * @param summary 向用户展示的 AI 工作摘要。
- * @returns 一个 Promise，解析为用户提供的反馈。
+ * @param mode 会话模式，默认为交互模式。通知模式不等待用户响应。
+ * @returns 一个 Promise，解析为用户提供的反馈或通知确认。
  */
 export async function solicitUserInput(
     projectDirectory: string,
-    summary: string
+    summary: string,
+    mode: SessionMode = SessionMode.INTERACTIVE
 ): Promise<UserFeedback> {
 
     const url = `http://localhost:${PORT}`;
@@ -41,13 +44,38 @@ export async function solicitUserInput(
     }
 
     try {
-        const feedbackPromise = sessionQueue.enqueue(summary, projectDirectory);
+        let feedbackPromise: Promise<UserFeedback>;
+        
+        if (mode === SessionMode.NOTIFICATION) {
+            // 通知模式使用专用方法
+            feedbackPromise = sessionQueue.enqueueNotification(summary, projectDirectory);
+            logger.info(`MCP: 通知模式会话已启动`);
+        } else {
+            // 交互模式使用原有方法
+            feedbackPromise = sessionQueue.enqueue(summary, projectDirectory, mode);
+            logger.info(`MCP: 交互模式会话已启动`);
+        }
+        
         checkQueueAndProcess(); // 触发队列处理
         const feedback = await feedbackPromise;
-        logger.debug('MCP: 从服务器收到反馈:', feedback);
+        logger.debug(`MCP: 从服务器收到反馈 (${mode}模式):`, feedback);
         return feedback;
     } catch (error) {
-        logger.error('MCP: 获取用户反馈时出错:', error);
+        logger.error(`MCP: 获取用户反馈时出错 (${mode}模式):`, error);
         return { error: (error instanceof Error ? error.message : String(error)) };
     }
+}
+
+/**
+ * 专用的通知工具接口，立即返回成功状态
+ * @param projectDirectory 项目目录的绝对路径
+ * @param summary 通知摘要
+ * @returns 立即返回成功的Promise
+ */
+export async function notifyUser(
+    projectDirectory: string,
+    summary: string
+): Promise<UserFeedback> {
+    logger.info(`MCP: 调用通知模式`);
+    return solicitUserInput(projectDirectory, summary, SessionMode.NOTIFICATION);
 }

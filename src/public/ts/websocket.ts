@@ -147,6 +147,85 @@ function connectWebSocket() {
           }
           break;
 
+        case 'notification':
+          // 处理通知消息
+          const notificationData = data.data;
+          if (notificationData && notificationData.summary) {
+            // 在通知面板中显示通知
+            const notificationPanel = document.getElementById('notification-panel');
+            if (notificationPanel) {
+              notificationPanel.style.display = 'block';
+              notificationPanel.innerHTML = `
+                <div class="notification-display">
+                  <div class="notification-header">
+                    <div class="notification-title">
+                      <i data-lucide="bell" class="icon notification-icon"></i>
+                      <span>AI 通知</span>
+                      <span class="notification-badge">通知模式</span>
+                    </div>
+                  </div>
+                  <hr class="notification-divider">
+                  <div class="notification-content">
+                    <div class="notification-summary">${marked.parse(notificationData.summary)}</div>
+                    <div class="notification-meta">
+                      <div class="notification-timestamp">
+                        <i data-lucide="clock" class="icon"></i>
+                        <span>刚刚</span>
+                      </div>
+                      <div class="notification-actions">
+                        <button class="acknowledge-btn" onclick="acknowledgeNotification()">
+                          <i data-lucide="check" class="icon"></i>
+                          已知晓
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `;
+              
+              // 重新创建图标
+              if (typeof (window as any).lucide !== 'undefined') {
+                (window as any).lucide.createIcons();
+              }
+            }
+            
+            // 隐藏交互面板
+            const feedbackPanel = document.getElementById('feedback-panel');
+            if (feedbackPanel) {
+              feedbackPanel.style.display = 'none';
+            }
+          }
+          break;
+
+        case 'session_request':
+          // 处理交互会话请求
+          const sessionData = data.data;
+          if (sessionData && sessionData.summary) {
+            // 显示交互面板
+            const feedbackPanel = document.getElementById('feedback-panel');
+            const notificationPanel = document.getElementById('notification-panel');
+            
+            if (notificationPanel) {
+              notificationPanel.style.display = 'none';
+            }
+            
+            if (feedbackPanel) {
+              feedbackPanel.style.display = 'block';
+            }
+            
+            // 更新摘要内容
+            summaryDiv.innerHTML = marked.parse(sessionData.summary);
+            
+            // 启动会话计时器
+            if (window.statusBar && sessionData.startTime && sessionData.timeoutSeconds) {
+              window.statusBar.startSessionTimer(sessionData.startTime, sessionData.timeoutSeconds);
+            }
+            
+            // 启用输入
+            enableFeedbackInput();
+          }
+          break;
+
         default:
 
           break;

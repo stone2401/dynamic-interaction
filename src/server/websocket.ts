@@ -5,6 +5,8 @@ import { sessionManager } from './sessionManager';
 import { sessionQueue } from './sessionQueue';
 import { serverStateManager } from './serverState';
 import { messageRouter } from './messageRouter';
+import { processClientMessage, routeSessionRequest } from './messageProcessor';
+import { isValidMessage } from '../types/websocket';
 
 let wss: WebSocketServer | null = null;
 
@@ -64,37 +66,28 @@ export function configureWebSocketServer(server?: Server): void {
                 const parsedMessage = JSON.parse(message.toString());
                 logger.debug('收到 WebSocket 消息:', parsedMessage);
 
-                if (parsedMessage.type === 'client_ready') {
-                    const session = sessionManager.getSessionByWs(ws);
-                    if (session) {
-                        // 发送包含会话开始时间和总超时的系统信息
-                        ws.send(JSON.stringify({
-                            type: 'system_info',
-                            data: {
-                                sessionId: session.id,
-                                workspaceDirectory: session.request.projectDirectory,
-                                sessionStartTime: session.startTime, // 发送开始时间
-                                leaseTimeoutSeconds: session.timeout, // 发送总时长
-                            }
-                        }));
-                    } else {
-                        // 如果没有会话，也发送一个通用信息
-                        ws.send(JSON.stringify({
-                            type: 'system_info',
-                            data: {
-                                sessionId: '无',
-                                workspaceDirectory: '未知',
-                                leaseTimeoutSeconds: 0,
-                            }
-                        }));
-                    }
+                // 使用新的消息处理器
+                if (isValidMessage(parsedMessage)) {
+                    processClientMessage(ws, parsedMessage);
                 } else {
-                    // 将其他消息路由到相应的处理器
-                    messageRouter.route(ws, parsedMessage);
+                    logger.warn('收到无效的WebSocket消息');
+                    ws.send(JSON.stringify({ 
+                        type: 'error', 
+                        data: { 
+                            message: '无效的消息格式',
+                            code: 'INVALID_MESSAGE_FORMAT'
+                        }
+                    }));
                 }
             } catch (error) {
                 logger.error('解析 WebSocket 消息失败:', error);
-                ws.send(JSON.stringify({ type: 'error', data: '无效的消息格式。' }));
+                ws.send(JSON.stringify({ 
+                    type: 'error', 
+                    data: {
+                        message: 'JSON解析失败',
+                        code: 'JSON_PARSE_ERROR'
+                    }
+                }));
             }
         });
 
@@ -134,8 +127,10 @@ export function checkQueueAndProcess(): void {
     if (availableWs) {
         const sessionRequest = sessionQueue.leaseNext();
         if (sessionRequest) {
-            logger.info(`为会话 ${sessionRequest.id} 分配了可用连接。`);
-            sessionManager.startSession(availableWs, sessionRequest);
+            logger.info(`为会话 ${sessionRequest.id} 分配了可用连接，模式: ${sessionRequest.mode}`);
+            
+            // 使用新的消息路由器来处理不同模式的会话
+            routeSessionRequest(availableWs, sessionRequest);
         }
     }
 }

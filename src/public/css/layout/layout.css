@@ -26,6 +26,7 @@ body {
 }
 
 .panel {
+    flex: 1;
     background-color: #2c2c2e;
     border-radius: 16px;
     padding: 24px 32px;

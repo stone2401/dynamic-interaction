@@ -5,7 +5,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { MCP_CONFIG, SESSION_TIMEOUT, TIMEOUT_PROMPT } from '../config';
-import { solicitUserInput } from './solicit-input';
+import { solicitUserInput, notifyUser } from './solicit-input';
+import { SessionMode } from '../types/session';
 import { logger } from '../logger';
 import { z } from 'zod';
 import { serverStateManager } from '../server/serverState';
@@ -74,8 +75,8 @@ export function configureMcpServer(): void {
                         return {
                             content: [
                                 {
-                                    type: "error",
-                                    text: `启动HTTP服务器失败: ${error instanceof Error ? error.message : String(error)}`,
+                                    type: "text",
+                                    text: `错误: 启动HTTP服务器失败: ${error instanceof Error ? error.message : String(error)}`,
                                 },
                             ],
                         };
@@ -83,7 +84,7 @@ export function configureMcpServer(): void {
                 }
 
                 // 调用实际的 solicitUserInput 函数，与前端 UI 建立会话并等待反馈
-                const feedback = await solicitUserInput(project_directory, summary);
+                const feedback = await solicitUserInput(project_directory, summary, SessionMode.INTERACTIVE);
 
                 // 将反馈转换为 MCP 期望的返回格式（List<any>）
                 const content: any[] = [];
@@ -130,8 +131,88 @@ export function configureMcpServer(): void {
                 return {
                     content: [
                         {
-                            type: "error",
-                            text: (error instanceof Error ? error.message : String(error)),
+                            type: "text",
+                            text: `错误: ${error instanceof Error ? error.message : String(error)}`,
+                        },
+                    ],
+                };
+            }
+        }
+    );
+
+    // 配置 notify-user 工具（通知模式）
+    mcpServer.registerTool(
+        "notify-user",
+        {
+            description: `
+# 工具名称: notify-user
+
+**功能描述:**
+发送通知消息给用户，不等待用户响应。适用于 AI 需要告知用户工作进展或状态更新，但不需要用户反馈的场景。
+
+**参数 (Args):**
+
+* \`project_directory\` (str, 必填): 相关项目目录的绝对路径。
+* \`summary\` (str, 必填): 通知内容。应清晰说明 AI 的工作状态或进展。内容为 Markdown 格式。
+
+**用户交互流程:**
+1.  通知消息会在用户界面中显示。
+2.  系统不会等待用户响应，立即返回成功状态。
+
+**返回值 (Returns):**
+立即返回通知发送成功的确认信息。
+`,
+            inputSchema: {
+                summary: z.string().describe("通知内容。应清晰说明 AI 的工作状态或进展。内容为 Markdown 格式。"),
+                project_directory: z.string().describe("相关项目目录的绝对路径。")
+            },
+            annotations: {
+                displayName: "用户通知器"
+            }
+        },
+        async ({ summary, project_directory }) => {
+            logger.info(`MCP: 发送通知。项目目录: ${project_directory}, 摘要: ${summary}`);
+            try {
+                // 检查HTTP服务器是否已启动，如果未启动则启动它
+                if (serverStateManager.state === 'stopped') {
+                    logger.info('HTTP服务器未启动，正在启动...');
+                    try {
+                        await freePortIfOccupied(PORT);
+                        await startExpressServer();
+                        logger.info(`HTTP服务器已懒启动，监听地址: http://localhost:${PORT}`);
+                    } catch (error) {
+                        logger.error('启动HTTP服务器失败:', error);
+                        return {
+                            content: [
+                                {
+                                    type: "text",
+                                    text: `错误: 启动HTTP服务器失败: ${error instanceof Error ? error.message : String(error)}`,
+                                },
+                            ],
+                        };
+                    }
+                }
+
+                // 调用通知函数，立即返回
+                const feedback = await notifyUser(project_directory, summary);
+
+                logger.info(`MCP: 通知已发送: ${JSON.stringify(feedback)}`);
+
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `通知已成功发送: ${feedback.text || '通知已显示在用户界面'}`,
+                        },
+                    ],
+                };
+            } catch (error) {
+                // 发生错误时通知调用方
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `错误: ${error instanceof Error ? error.message : String(error)}`,
                         },
                     ],
                 };
