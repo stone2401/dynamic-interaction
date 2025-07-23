@@ -59,10 +59,11 @@ export class WebSocketTransport {
     const notification = {
       type: 'notification',
       data: {
-        id: notificationId,
+        notificationId,
         summary,
         projectDirectory,
-        timestamp: Date.now()
+        mode: 'NOTIFICATION',
+        createdAt: Date.now()
       }
     };
 
@@ -80,12 +81,12 @@ export class WebSocketTransport {
     const sessionRequest = {
       type: 'session_request',
       data: {
-        id: sessionId,
+        sessionId,
         summary,
         projectDirectory,
+        mode: 'INTERACTIVE',
         startTime,
-        timeout,
-        timestamp: Date.now()
+        timeoutSeconds: timeout
       }
     };
 

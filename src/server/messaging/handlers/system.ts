@@ -31,6 +31,10 @@ function handleClientReady(
     // 发送通用系统信息
     transport.sendSystemInfo(ws);
   }
+
+  // 检查并处理等待队列中的消息
+  const { messageProcessor } = require('../processor');
+  messageProcessor.checkQueueAndProcess();
 }
 
 function handleSessionAcknowledge(

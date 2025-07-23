@@ -38,7 +38,7 @@ class FeedbackComponent {
     }
 
     this.updateMessageStatus('sending');
-    
+
     // 立即清空输入和预览
     const feedbackData = { text, images: [...images] };
     this.elements.feedbackInput.innerText = '';
@@ -71,6 +71,15 @@ class FeedbackComponent {
     this.isEnabled = false;
   }
 
+  private resetAndEnableInput(): void {
+    if (this.elements.feedbackInput) {
+      this.elements.feedbackInput.innerHTML = '';
+      imageHandler.clearPreview(); // 清空图片预览
+    }
+    this.enableFeedbackInput();
+    this.updateMessageStatus('idle');
+  }
+
   public enableFeedbackInput(): void {
     if (this.elements.feedbackInput && this.elements.dropZone) {
       this.elements.feedbackInput.contentEditable = 'true';
@@ -96,6 +105,9 @@ class FeedbackComponent {
         this.sendCompositeFeedback();
       });
     }
+
+    // 监听来自AI的新消息，以重置和重新启用输入
+    eventBus.on(APP_EVENTS.FEEDBACK_SEND, this.resetAndEnableInput.bind(this));
 
     // Ctrl+Enter 快捷键
     if (this.elements.feedbackInput) {
