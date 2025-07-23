@@ -107,17 +107,6 @@ class FeedbackComponent {
       });
     }
 
-    // 事件总线监听
-    eventBus.on(APP_EVENTS.FEEDBACK_SUCCESS, () => {
-      this.enableFeedbackInput();
-    });
-
-    eventBus.on(APP_EVENTS.STATUS_CHANGED, (data: any) => {
-      if (data.type === 'message') {
-        this.updateMessageStatus(data.status);
-      }
-    });
-
     // 页面卸载前提示
     window.addEventListener('beforeunload', (e: BeforeUnloadEvent) => {
       if (this.hasUnsavedContent()) {

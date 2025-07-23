@@ -132,8 +132,6 @@ class StatusBarComponent {
 
       this.elements.messageStatus.textContent = statusTexts[status];
     }
-
-    eventBus.emit(APP_EVENTS.STATUS_CHANGED, { type: 'message', status });
   }
 
   public startSessionTimer(sessionStartTime: number, totalDurationSeconds: number): void {
