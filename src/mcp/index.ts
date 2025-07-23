@@ -10,8 +10,8 @@ import { normalizeImageFeedback } from '../utils/image';
 import { SessionMode } from '../types/session';
 import { logger } from '../logger';
 import { z } from 'zod';
-import { serverStateManager } from '../server/serverState';
-import { startExpressServer } from '../server/express';
+import { lifecycleManager } from '../server/core/lifecycle';
+import { startServer } from '../server/core/app';
 import { freePortIfOccupied } from '../server/port';
 import { PORT } from '../config';
 
@@ -65,11 +65,11 @@ export function configureMcpServer(): void {
             logger.info(`MCP: 请求用户输入。项目目录: ${project_directory}, 摘要: ${summary}`);
             try {
                 // 检查HTTP服务器是否已启动，如果未启动则启动它
-                if (serverStateManager.state === 'stopped') {
+                if (lifecycleManager.state === 'stopped') {
                     logger.info('HTTP服务器未启动，正在启动...');
                     try {
                         await freePortIfOccupied(PORT);
-                        await startExpressServer();
+                        await startServer();
                         logger.info(`HTTP服务器已懒启动，监听地址: http://localhost:${PORT}`);
                     } catch (error) {
                         logger.error('启动HTTP服务器失败:', error);
@@ -180,11 +180,11 @@ export function configureMcpServer(): void {
             logger.info(`MCP: 发送通知。项目目录: ${project_directory}, 摘要: ${summary}`);
             try {
                 // 检查HTTP服务器是否已启动，如果未启动则启动它
-                if (serverStateManager.state === 'stopped') {
+                if (lifecycleManager.state === 'stopped') {
                     logger.info('HTTP服务器未启动，正在启动...');
                     try {
                         await freePortIfOccupied(PORT);
-                        await startExpressServer();
+                        await startServer();
                         logger.info(`HTTP服务器已懒启动，监听地址: http://localhost:${PORT}`);
                     } catch (error) {
                         logger.error('启动HTTP服务器失败:', error);

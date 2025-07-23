@@ -7,21 +7,71 @@ import * as winston from 'winston';
 import * as path from 'path';
 import * as fs from 'fs';
 import { LOG_CONFIG } from './config';
-import { WebSocketTransport, setWebSocketServer as originalSetWebSocketServer } from './server/websocketTransport';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { WebSocketServer } from 'ws';
+import TransportStream from 'winston-transport';
+
+// WebSocket传输类的简化实现
+class WebSocketTransport extends TransportStream {
+    private clients = new Set<any>();
+    
+    constructor() {
+        super();
+    }
+
+    log(info: any, callback: () => void) {
+        setImmediate(() => {
+            this.emit('logged', info);
+        });
+
+        // 广播日志到所有连接的客户端
+        const logMessage = JSON.stringify({
+            type: 'log',
+            level: info.level,
+            message: info.message,
+            timestamp: info.timestamp,
+            ...(info.stack && { stack: info.stack }),
+        });
+
+        this.clients.forEach((client) => {
+            if (client.readyState === 1) { // 1 = OPEN
+                try {
+                    client.send(logMessage);
+                } catch (error) {
+                    // 忽略发送错误，移除无效连接
+                    this.clients.delete(client);
+                }
+            }
+        });
+
+        callback();
+    }
+
+    public addClient(client: any): void {
+        this.clients.add(client);
+        client.on('close', () => {
+            this.clients.delete(client);
+        });
+    }
+}
+
+const wsTransport = new WebSocketTransport();
+
+// 设置WebSocket服务器函数
+export function setWebSocketServer(server: WebSocketServer) {
+    server.on('connection', (ws) => {
+        wsTransport.addClient(ws);
+    });
+};
 
 let logger: winston.Logger;
-let setWebSocketServer: (server: WebSocketServer) => void;
 
 if (!LOG_CONFIG.enabled) {
     // 如果日志系统被禁用，创建一个静默的 logger
     logger = winston.createLogger({
         transports: [new winston.transports.Console({ silent: true })]
     });
-    console.log('日志系统已禁用，WebSocket 日志传输将不会被初始化。');
-    // 当禁用时，提供一个空操作函数
-    setWebSocketServer = (_server: WebSocketServer) => { /* do nothing */ };
+    console.log('日志系统已禁用，WebSocket 日志传输将不会被初始化。')
 } else {
     // 确保日志目录存在
     let logDir = LOG_CONFIG.dir;
@@ -96,9 +146,6 @@ if (!LOG_CONFIG.enabled) {
         exitOnError: false,
     });
 
-    // 当启用时，使用原始函数
-    setWebSocketServer = originalSetWebSocketServer;
-
     logger.info('日志系统已初始化', {
         logLevel: LOG_CONFIG.level,
         logDir: LOG_CONFIG.fileLogging ? logDir : 'disabled',
@@ -106,4 +153,4 @@ if (!LOG_CONFIG.enabled) {
     });
 }
 
-export { logger, setWebSocketServer };
+export { logger };

@@ -3,8 +3,9 @@
  * 此模块现在负责调用服务器来启动用户交互，并等待结果。
  */
 
-import { connectionManager, checkQueueAndProcess } from '../server/websocket';
-import { sessionQueue } from '../server/sessionQueue';
+import { webSocketManager } from '../server/websocket/connection';
+import { messageProcessor } from '../server/messaging/processor';
+import { sessionQueue } from '../server/session/queue';
 import { UserFeedback } from '../types/feedback'; // 引入共用的用户反馈类型定义
 import { SessionMode } from '../types/session'; // 引入会话模式枚举
 import { PORT } from '../config'; // 新增：导入 PORT
@@ -28,7 +29,7 @@ export async function solicitUserInput(
     const url = `http://localhost:${PORT}`;
 
     // 检查是否有活动的WebSocket连接
-    const hasActiveConnections = connectionManager.getActiveConnectionCount() > 0;
+    const hasActiveConnections = webSocketManager.getConnectionCount() > 0;
 
     if (!hasActiveConnections) {
         // 仅在没有活动连接时才打开新的浏览器窗口
@@ -40,23 +41,35 @@ export async function solicitUserInput(
             logger.warn(`MCP: 自动打开浏览器失败，请用户手动访问: ${url}`);
         }
     } else {
-        logger.info(`MCP: 检测到${connectionManager.getActiveConnectionCount()}个活动WebSocket连接，复用现有连接`);
+        logger.info(`MCP: 检测到${webSocketManager.getConnectionCount()}个活动WebSocket连接，复用现有连接`);
     }
 
     try {
-        let feedbackPromise: Promise<UserFeedback>;
+        // 创建会话请求
+        const sessionRequest = {
+            id: require('crypto').randomUUID(),
+            summary,
+            projectDirectory,
+            createdAt: Date.now(),
+            mode,
+            resolve: null as any,
+            reject: null as any,
+            retryCount: 0
+        };
+
+        // 创建Promise并设置resolve/reject
+        const feedbackPromise = new Promise<UserFeedback>((resolve, reject) => {
+            sessionRequest.resolve = resolve;
+            sessionRequest.reject = reject;
+        });
+
+        // 将请求入队
+        sessionQueue.enqueue(sessionRequest);
+        logger.info(`MCP: ${mode}模式会话已启动，ID: ${sessionRequest.id}`);
         
-        if (mode === SessionMode.NOTIFICATION) {
-            // 通知模式使用专用方法
-            feedbackPromise = sessionQueue.enqueueNotification(summary, projectDirectory);
-            logger.info(`MCP: 通知模式会话已启动`);
-        } else {
-            // 交互模式使用原有方法
-            feedbackPromise = sessionQueue.enqueue(summary, projectDirectory, mode);
-            logger.info(`MCP: 交互模式会话已启动`);
-        }
+        // 触发队列处理
+        messageProcessor.checkQueueAndProcess();
         
-        checkQueueAndProcess(); // 触发队列处理
         const feedback = await feedbackPromise;
         logger.debug(`MCP: 从服务器收到反馈 (${mode}模式):`, feedback);
         return feedback;

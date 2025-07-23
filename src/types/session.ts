@@ -21,6 +21,7 @@ export interface PendingSessionRequest {
   reject: (reason?: any) => void;
   leaseTimer?: NodeJS.Timeout;
   mode: SessionMode; // 会话模式：交互或通知
+  retryCount?: number; // 重试计数
 }
 
 /**
