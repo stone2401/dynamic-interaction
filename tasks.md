@@ -1,0 +1,5 @@
+- [x] 在 `languageSwitcher.ts` 的 `updateAllI18nElements` 中增加忽略逻辑：若元素含 `data-i18n-skip` 则跳过替换
+- [x] 在 `statusBar.ts` 初始化时，为工作区目录、会话 ID、连接状态、延迟等数值节点添加 `data-i18n-skip` 属性（DOM 查询或模板属性）
+- [x] 更新 `index.html` 中对应节点以预置 `data-i18n-skip`，保证渲染前即生效
+- [x] 运行前端构建/热更新环境，手动验证切换语言时状态栏动态数据不被重置
+- [ ] 添加简易单元测试（可选）验证 `updateAllI18nElements` 忽略逻辑

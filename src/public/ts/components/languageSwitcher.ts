@@ -73,6 +73,8 @@ class LanguageSwitcherComponent {
     // 更新文本内容
     const i18nElements = document.querySelectorAll('[data-i18n]');
     i18nElements.forEach((element) => {
+      // 跳过标记为 data-i18n-skip 的节点
+      if (element.hasAttribute('data-i18n-skip')) return;
       const key = element.getAttribute('data-i18n');
       if (key) {
         const text = i18nService.t(key);
@@ -83,6 +85,7 @@ class LanguageSwitcherComponent {
     // 更新 placeholder 属性
     const placeholderElements = document.querySelectorAll('[data-i18n-placeholder]');
     placeholderElements.forEach((element) => {
+      if (element.hasAttribute('data-i18n-skip')) return;
       const key = element.getAttribute('data-i18n-placeholder');
       if (key) {
         const text = i18nService.t(key);
@@ -93,6 +96,7 @@ class LanguageSwitcherComponent {
     // 更新 title 属性
     const titleElements = document.querySelectorAll('[data-i18n-title]');
     titleElements.forEach((element) => {
+      if (element.hasAttribute('data-i18n-skip')) return;
       const key = element.getAttribute('data-i18n-title');
       if (key) {
         const text = i18nService.t(key);

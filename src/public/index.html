@@ -33,12 +33,12 @@
                 <div class="status-item">
                     <i data-lucide="folder-open" class="icon"></i>
                     <span class="label" data-i18n="status.workspace">工作区：</span>
-                    <span id="workspace-directory-value" class="value" data-i18n="feedback.messages.loadingWorkspace">加载中...</span>
+                    <span id="workspace-directory-value" class="value" data-i18n="feedback.messages.loadingWorkspace" data-i18n-skip>加载中...</span>
                 </div>
                 <div class="status-item">
                     <i data-lucide="key-round" class="icon"></i>
                     <span class="label" data-i18n="status.sessionId">会话ID：</span>
-                    <span id="session-id-value" class="value" data-i18n="feedback.messages.loadingSession">加载中...</span>
+                    <span id="session-id-value" class="value" data-i18n="feedback.messages.loadingSession" data-i18n-skip>加载中...</span>
                 </div>
             </div>
             <!-- 中间区域：会话倒计时 -->
@@ -52,12 +52,12 @@
             <div class="status-bar-section">
                 <div class="status-item connection">
                     <span id="status-pulse" class="status-pulse disconnected"></span>
-                    <span id="connection-status-value" data-i18n="status.connectionStatus.disconnected">未连接</span>
-                    <span class="latency">(<span id="latency-value" class="latency-value">--</span>)</span>
+                    <span id="connection-status-value" data-i18n="status.connectionStatus.disconnected" data-i18n-skip>未连接</span>
+                    <span class="latency">(<span id="latency-value" class="latency-value" data-i18n-skip>--</span>)</span>
                 </div>
                 <div class="status-item message-status">
                     <i data-lucide="message-circle" class="icon"></i>
-                    <span id="message-status-value" data-i18n="status.messageStatus.idle">暂无新消息</span>
+                    <span id="message-status-value" data-i18n="status.messageStatus.idle" data-i18n-skip>暂无新消息</span>
                 </div>
                 <div class="status-item language-switcher" id="language-switcher" title="切换语言">
                     <i data-lucide="globe" class="icon language-icon"></i>
