@@ -84,6 +84,7 @@ pnpm run build
 |--------|------|--------|
 | `PORT` | HTTP 服务器端口 | `10086` |
 | `SESSION_TIMEOUT` | 会话超时时间（秒） | `300` |
+| `DEFAULT_LANGUAGE` | 默认界面语言（`zh`、`en` 等） | `zh` |
 | `TIMEOUT_PROMPT` | 会话超时时的默认提示 | `"continue"` |
 
 ### 日志配置
@@ -100,7 +101,7 @@ pnpm run build
 
 **示例：**
 ```bash
-PORT=8080 LOG_ENABLED=true dynamic-interaction
+PORT=8080 LOG_ENABLED=true DEFAULT_LANGUAGE=en dynamic-interaction
 ```
 
 ## 🌟 主要功能详解

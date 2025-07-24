@@ -16,6 +16,9 @@ export const MCP_CONFIG = {
     version: "1.0.0",
 };
 
+// 默认语言配置
+export const DEFAULT_LANGUAGE = process.env.DEFAULT_LANGUAGE || 'zh';
+
 // 会话租约超时时间（秒），用于处理中的任务
 export const SESSION_TIMEOUT = Number(process.env.SESSION_TIMEOUT) || 300; // 默认 5 分钟
 

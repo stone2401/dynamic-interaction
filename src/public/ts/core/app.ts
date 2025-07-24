@@ -9,6 +9,7 @@ import { webSocketService } from '../services/websocket.js';
 import { statusBarComponent } from '../components/statusBar.js';
 import { feedbackComponent } from '../components/feedback.js';
 import { languageSwitcherComponent } from '../components/languageSwitcher.js';
+import { i18nService, getInitialLang } from '../services/i18n.js';
 import { imageHandler, setupDragAndDrop, setupPasteListener } from '../components/imageHandler.js';
 import { sendCompositeFeedback } from '../components/feedback.js';
 import { processFiles, clearPreview } from '../components/imageHandler.js';
@@ -43,7 +44,10 @@ class Application {
       // 4. 初始化拖拽和粘贴功能
       this.initializeDragAndDrop();
 
-      // 5. 初始化WebSocket连接
+      // 5. 设置初始语言
+      i18nService.switchLanguage(getInitialLang());
+
+      // 6. 初始化WebSocket连接
       webSocketService.initialize();
 
       // 6. 设置全局函数（向后兼容）

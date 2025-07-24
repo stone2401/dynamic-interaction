@@ -6,6 +6,7 @@
 import express from 'express';
 import http from 'http';
 import path from 'path';
+import fs from 'fs';
 import { PORT } from '../../config';
 import { logger } from '../../logger';
 
@@ -31,7 +32,26 @@ export class HttpServer {
     // 提供静态文件服务
     const staticPath = path.join(__dirname, '..', '..', 'public');
     this.app.use(express.static(staticPath));
+
+    // 默认语言注入中间件
+    this.app.use((req, res, next) => {
+      if (req.path === '/' || req.path === '/index.html') {
+        const filePath = path.join(staticPath, 'index.html');
+        let html = fs.readFileSync(filePath, 'utf-8');
+        html = html.replace('<html>', `<html lang="${process.env.DEFAULT_LANGUAGE || 'zh'}">`);
+        html = html.replace('</head>', `<script>window.__DEFAULT_LANG__ = "${process.env.DEFAULT_LANGUAGE || 'zh'}";</script></head>`);
+        res.setHeader('Content-Type', 'text/html');
+        res.end(html);
+        return;
+      }
+      next();
+    });
     logger.info(`静态文件服务路径: ${staticPath}`);
+
+    // /config 路由，提供运行时配置
+    this.app.get('/config', (_req, res) => {
+      res.json({ defaultLanguage: process.env.DEFAULT_LANGUAGE || 'zh' });
+    });
   }
 
   public getApp(): express.Application {

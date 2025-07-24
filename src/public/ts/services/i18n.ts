@@ -200,10 +200,16 @@ class I18nService {
    * 检测用户系统语言并设置默认语言
    */
   private detectAndSetLanguage(): void {
+    // 优先读取 localStorage，其次读取 SSR 注入的默认语言，最后回退浏览器语言
     const savedLanguage = localStorage.getItem('app-language') as SupportedLanguage;
+    const ssrDefault = (window as any).__DEFAULT_LANG__ as string | undefined;
     
-    if (savedLanguage && this.languages[savedLanguage]) {
-      this.currentLanguage = savedLanguage;
+    if (savedLanguage && this.languages[savedLanguage as SupportedLanguage]) {
+      // 本地已保存偏好
+      this.currentLanguage = savedLanguage as SupportedLanguage;
+    } else if (ssrDefault && (ssrDefault === 'zh' || ssrDefault === 'en')) {
+      // 服务器注入首选
+      this.currentLanguage = ssrDefault === 'zh' ? 'zh-CN' : 'en-US';
     } else {
       // 检测浏览器语言
       const browserLanguage = navigator.language || navigator.languages?.[0] || 'en-US';
@@ -322,4 +328,10 @@ class I18nService {
 }
 
 export const i18nService = new I18nService();
+
+// 获取初始语言，供应用启动时使用
+export function getInitialLang(): SupportedLanguage {
+  return i18nService.getCurrentLanguage();
+}
+
 export type { SupportedLanguage };
