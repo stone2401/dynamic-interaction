@@ -8,6 +8,7 @@ import { getElementById } from '../utils/dom.js';
 import { eventBus, APP_EVENTS } from '../core/events.js';
 import { webSocketService } from '../services/websocket.js';
 import { imageHandler, getAttachedImageData } from './imageHandler.js';
+import { i18nService } from '../services/i18n.js';
 
 class FeedbackComponent {
   private elements: {
@@ -32,7 +33,7 @@ class FeedbackComponent {
     const images = getAttachedImageData();
 
     if (!text && images.length === 0) {
-      this.showMessage('请输入反馈文本或添加图片');
+      this.showMessage(i18nService.t('feedback.messages.enterFeedback'));
       this.updateMessageStatus('idle');
       return false;
     }
@@ -50,13 +51,13 @@ class FeedbackComponent {
     const success = webSocketService.sendFeedback(feedbackData.text, feedbackData.images as CustomImageData[]);
 
     if (success) {
-      this.showMessage('反馈已发送');
+      this.showMessage(i18nService.t('feedback.messages.feedbackSent'));
       eventBus.emit(APP_EVENTS.FEEDBACK_SEND, feedbackData);
     } else {
-      this.showMessage('发送失败，请检查连接');
+      this.showMessage(i18nService.t('feedback.messages.sendFailed'));
       this.updateMessageStatus('idle');
       this.enableFeedbackInput();
-      eventBus.emit(APP_EVENTS.FEEDBACK_ERROR, { error: '发送失败' });
+      eventBus.emit(APP_EVENTS.FEEDBACK_ERROR, { error: i18nService.t('feedback.messages.sendFailed') });
     }
 
     return success;
@@ -123,7 +124,7 @@ class FeedbackComponent {
     window.addEventListener('beforeunload', (e: BeforeUnloadEvent) => {
       if (this.hasUnsavedContent()) {
         e.preventDefault();
-        e.returnValue = '您有未发送的内容，确定要离开吗？';
+        e.returnValue = i18nService.t('feedback.messages.unsavedContent');
         return e.returnValue;
       }
     });

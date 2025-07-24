@@ -6,6 +6,7 @@
 import type { SystemInfo, ConnectionStatus, MessageStatus } from '../core/types.js';
 import { getElementById } from '../utils/dom.js';
 import { eventBus, APP_EVENTS } from '../core/events.js';
+import { i18nService } from '../services/i18n.js';
 
 const LATENCY_THRESHOLD = {
   NORMAL: 100,
@@ -29,8 +30,8 @@ class StatusBarComponent {
     pingInterval: 0,
     currentLatency: 0,
     systemInfo: {
-      workspaceDirectory: '未知目录',
-      sessionId: '未知',
+      workspaceDirectory: i18nService.t('feedback.messages.unknownDirectory'),
+      sessionId: i18nService.t('feedback.messages.unknown'),
     } as SystemInfo,
     connectionStatus: 'disconnected' as ConnectionStatus,
     messageStatus: 'idle' as MessageStatus,
@@ -72,10 +73,10 @@ class StatusBarComponent {
       this.elements.statusPulse.classList.add(status);
 
       const statusTexts = {
-        connected: '已连接',
-        disconnected: '未连接',
-        'high-latency': '延迟高',
-        reconnecting: '正在重连...'
+        connected: i18nService.t('status.connectionStatus.connected'),
+        disconnected: i18nService.t('status.connectionStatus.disconnected'),
+        'high-latency': i18nService.t('status.connectionStatus.highLatency'),
+        reconnecting: i18nService.t('status.connectionStatus.reconnecting')
       };
 
       this.elements.connectionStatus.textContent = statusTexts[status];
@@ -123,11 +124,11 @@ class StatusBarComponent {
       this.elements.messageStatus.classList.add(status);
 
       const statusTexts = {
-        idle: '暂无新消息',
-        sending: '正在发送...',
-        waiting: '等待AI响应...',
-        received: '已收到回复',
-        timeout: '会话已超时'
+        idle: i18nService.t('status.messageStatus.idle'),
+        sending: i18nService.t('status.messageStatus.sending'),
+        waiting: i18nService.t('status.messageStatus.waiting'),
+        received: i18nService.t('status.messageStatus.received'),
+        timeout: i18nService.t('status.messageStatus.timeout')
       };
 
       this.elements.messageStatus.textContent = statusTexts[status];
@@ -171,7 +172,7 @@ class StatusBarComponent {
         this.elements.timerValue.textContent = '--:--';
       } else {
         this.elements.timer.style.display = 'flex';
-        this.elements.timerValue.textContent = '超时';
+        this.elements.timerValue.textContent = i18nService.t('feedback.messages.timeout');
       }
     }
   }

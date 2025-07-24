@@ -187,6 +187,35 @@
     background-color: rgba(120, 120, 128, 0.16);
 }
 
+.language-switcher {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 4px 6px;
+    margin: -4px;
+    /* Offset padding to maintain alignment */
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.language-switcher:hover {
+    background-color: rgba(120, 120, 128, 0.16);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.language-text {
+    font-size: 10px;
+    font-weight: 600;
+    color: #f5f5f7;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.language-icon {
+    width: 12px !important;
+    height: 12px !important;
+    opacity: 0.8;
+}
+
 #message-status-value {
     transition: all 0.4s ease;
     padding: 3px 8px;
@@ -308,5 +337,9 @@
 
     .status-item .label {
         color: #86868b;
+    }
+
+    .language-text {
+        color: #1d1d1f;
     }
 }

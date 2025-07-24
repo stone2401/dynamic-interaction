@@ -84,6 +84,9 @@ export const APP_EVENTS = {
   // 主题事件
   THEME_CHANGED: 'theme:changed',
   
+  // 语言事件
+  LANGUAGE_CHANGED: 'language:changed',
+  
   // 状态事件
   STATUS_CHANGED: 'status:changed',
 } as const;

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>交互式反馈系统</title>
+    <title data-i18n="title">交互式反馈系统</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -32,34 +32,38 @@
             <div class="status-bar-section">
                 <div class="status-item">
                     <i data-lucide="folder-open" class="icon"></i>
-                    <span class="label">工作区：</span>
-                    <span id="workspace-directory-value" class="value">加载中...</span>
+                    <span class="label" data-i18n="status.workspace">工作区：</span>
+                    <span id="workspace-directory-value" class="value" data-i18n="feedback.messages.loadingWorkspace">加载中...</span>
                 </div>
                 <div class="status-item">
                     <i data-lucide="key-round" class="icon"></i>
-                    <span class="label">会话ID：</span>
-                    <span id="session-id-value" class="value">加载中...</span>
+                    <span class="label" data-i18n="status.sessionId">会话ID：</span>
+                    <span id="session-id-value" class="value" data-i18n="feedback.messages.loadingSession">加载中...</span>
                 </div>
             </div>
             <!-- 中间区域：会话倒计时 -->
             <div class="status-bar-section center-section">
                 <div class="status-item session-timer" id="session-timer">
                     <i data-lucide="timer" class="icon"></i>
-                    <span class="label">会话剩余时间：</span>
+                    <span class="label" data-i18n="status.sessionTimer">会话剩余时间：</span>
                     <span id="session-timer-value" class="value">--:--</span>
                 </div>
             </div>
             <div class="status-bar-section">
                 <div class="status-item connection">
                     <span id="status-pulse" class="status-pulse disconnected"></span>
-                    <span id="connection-status-value">未连接</span>
+                    <span id="connection-status-value" data-i18n="status.connectionStatus.disconnected">未连接</span>
                     <span class="latency">(<span id="latency-value" class="latency-value">--</span>)</span>
                 </div>
                 <div class="status-item message-status">
                     <i data-lucide="message-circle" class="icon"></i>
-                    <span id="message-status-value">暂无新消息</span>
+                    <span id="message-status-value" data-i18n="status.messageStatus.idle">暂无新消息</span>
                 </div>
-                <div class="status-item theme-switcher" id="theme-switcher" title="切换主题">
+                <div class="status-item language-switcher" id="language-switcher" title="切换语言">
+                    <i data-lucide="globe" class="icon language-icon"></i>
+                    <span class="language-text" id="language-text">中</span>
+                </div>
+                <div class="status-item theme-switcher" id="theme-switcher" data-i18n-title="status.themeSwitch">
                     <i data-lucide="sun" class="icon theme-icon-sun"></i>
                     <i data-lucide="moon" class="icon theme-icon-moon" style="display: none;"></i>
                 </div>
@@ -76,42 +80,42 @@
         <!-- AI 工作摘要 -->
         <div id="summary-panel" class="panel">
             <h2>
-                <i data-lucide="lightbulb" class="icon"></i> AI 工作摘要
+                <i data-lucide="lightbulb" class="icon"></i> <span data-i18n="summary.title">AI 工作摘要</span>
             </h2>
             <hr>
-            <div id="summary"> - 我已根据您之前的需求“模仿苹果官网风格设计UI”，提供了两个版本的HTML...</div>
+            <div id="summary"> - 我已根据您之前的需求"模仿苹果官网风格设计UI"，提供了两个版本的HTML...</div>
         </div>
 
         <!-- 提供反馈 -->
         <div id="feedback-panel" class="panel">
             <div class="panel-header">
                 <h2>
-                    <i data-lucide="corner-down-left" class="icon"></i> 提供反馈
+                    <i data-lucide="corner-down-left" class="icon"></i> <span data-i18n="feedback.title">提供反馈</span>
                 </h2>
-                <button id="send-feedback-btn">提交反馈</button>
+                <button id="send-feedback-btn" data-i18n="feedback.submitButton">提交反馈</button>
             </div>
             <hr>
 
             <div class="feedback-section">
-                <label for="feedback-input">文字反馈</label>
-                <div id="feedback-input" contenteditable="true" placeholder="请在这里输入您的指示或回复..."></div>
+                <label for="feedback-input" data-i18n="feedback.textLabel">文字反馈</label>
+                <div id="feedback-input" contenteditable="true" data-i18n-placeholder="feedback.textPlaceholder" placeholder="请在这里输入您的指示或回复..."></div>
             </div>
 
             <div class="hints-section">
-                <p>小提示:</p>
+                <p data-i18n="feedback.hints.title">小提示:</p>
                 <ul>
-                    <li>按 Ctrl+Enter (或 Cmd+Enter) 可快速提交</li>
-                    <li>支持 Ctrl+V (或 Cmd+V) 粘贴图片</li>
+                    <li data-i18n="feedback.hints.shortcut">按 Ctrl+Enter (或 Cmd+Enter) 可快速提交</li>
+                    <li data-i18n="feedback.hints.pasteImage">支持 Ctrl+V (或 Cmd+V) 粘贴图片</li>
                 </ul>
             </div>
 
             <div class="attachment-section">
-                <label>图片附件 (可选)</label>
+                <label data-i18n="feedback.attachments.title">图片附件 (可选)</label>
                 <div id="drop-zone">
                     <div class="drop-zone-text">
                         <i data-lucide="paperclip" class="icon"></i>
-                        <p>点击选择或拖拽图片到此处</p>
-                        <span>支持 PNG, JPG, GIF, WebP 等格式</span>
+                        <p data-i18n="feedback.attachments.dropZoneText">点击选择或拖拽图片到此处</p>
+                        <span data-i18n="feedback.attachments.supportedFormats">支持 PNG, JPG, GIF, WebP 等格式</span>
                     </div>
                 </div>
                 <div id="image-preview-container"></div>

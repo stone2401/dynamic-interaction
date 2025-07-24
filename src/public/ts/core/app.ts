@@ -8,6 +8,7 @@ import { notificationService } from '../services/notification.js';
 import { webSocketService } from '../services/websocket.js';
 import { statusBarComponent } from '../components/statusBar.js';
 import { feedbackComponent } from '../components/feedback.js';
+import { languageSwitcherComponent } from '../components/languageSwitcher.js';
 import { imageHandler, setupDragAndDrop, setupPasteListener } from '../components/imageHandler.js';
 import { sendCompositeFeedback } from '../components/feedback.js';
 import { processFiles, clearPreview } from '../components/imageHandler.js';
@@ -37,6 +38,7 @@ class Application {
       // 3. 初始化UI组件
       statusBarComponent.initialize();
       feedbackComponent.initialize();
+      languageSwitcherComponent.initialize();
 
       // 4. 初始化拖拽和粘贴功能
       this.initializeDragAndDrop();
