@@ -228,7 +228,7 @@ class WebSocketService {
     this.showNotificationPanel(notificationData.summary);
     this.hideInteractionPanel();
 
-    if (document.hidden) {
+    if (notificationService.isPageHidden()) {
       notificationService.showAINotification(notificationData.summary);
     }
   }
@@ -249,7 +249,7 @@ class WebSocketService {
 
     eventBus.emit(APP_EVENTS.FEEDBACK_SUCCESS);
 
-    if (document.hidden) {
+    if (notificationService.isPageHidden()) {
       notificationService.showSessionRequestNotification(sessionData.summary);
     }
   }

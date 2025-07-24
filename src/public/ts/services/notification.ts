@@ -15,9 +15,11 @@ import { eventBus, APP_EVENTS } from '../core/events.js';
 class NotificationService {
   private static instance: NotificationService;
   private isSupported: boolean;
+  private isPageVisible: boolean = true;
 
   private constructor() {
     this.isSupported = 'Notification' in window;
+    this.initializePageVisibility();
   }
 
   public static getInstance(): NotificationService {
@@ -29,6 +31,21 @@ class NotificationService {
 
   public checkSupport(): boolean {
     return this.isSupported;
+  }
+
+  public isPageHidden(): boolean {
+    return !this.isPageVisible;
+  }
+
+  private initializePageVisibility(): void {
+    this.isPageVisible = !document.hidden;
+    
+    document.addEventListener('visibilitychange', () => {
+      this.isPageVisible = !document.hidden;
+      eventBus.emit(APP_EVENTS.PAGE_VISIBILITY_CHANGED, { 
+        isVisible: this.isPageVisible 
+      });
+    });
   }
 
   public getPermissionStatus(): NotificationPermission {

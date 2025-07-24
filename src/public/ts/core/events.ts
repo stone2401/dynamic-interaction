@@ -78,6 +78,9 @@ export const APP_EVENTS = {
   NOTIFICATION_SHOW: 'notification:show',
   NOTIFICATION_CLOSE: 'notification:close',
   
+  // 页面可见性事件
+  PAGE_VISIBILITY_CHANGED: 'page:visibility_changed',
+  
   // 主题事件
   THEME_CHANGED: 'theme:changed',
   
