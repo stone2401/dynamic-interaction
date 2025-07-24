@@ -8,7 +8,7 @@ import * as os from 'os';
 export const PORT = Number(process.env.PORT) || 10086;
 
 // 超时提示词语
-export const TIMEOUT_PROMPT = String(process.env.TIMEOUT_PROMPT) || "continue";
+export const TIMEOUT_PROMPT = process.env.TIMEOUT_PROMPT != undefined ? process.env.TIMEOUT_PROMPT : "continue";
 
 // MCP 服务器配置
 export const MCP_CONFIG = {
