@@ -74,9 +74,17 @@
 }
 
 @keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 .notification-divider {
@@ -384,6 +392,7 @@
 /* 附件区域样式 */
 .attachment-section {
   margin-bottom: 16px;
+  padding: 20px;
 }
 
 .attachment-section label {
@@ -503,6 +512,7 @@
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+
   .notification-header,
   .session-header,
   .feedback-header {
@@ -510,17 +520,17 @@
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .notification-meta {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .image-preview-container {
     justify-content: center;
   }
-  
+
   .image-preview {
     max-width: 150px;
   }
