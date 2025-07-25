@@ -1,6 +1,6 @@
 {
   "name": "dynamic-interaction",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Dynamic interaction\n动态交互mcp，用于cursor、windsurf、trae 等 AI 智能编辑器 Agent 运行时交互使用",
   "homepage": "https://github.com/stone2401/dynamic-interaction#readme",
   "repository": {
