@@ -73,6 +73,8 @@ AI Rule add below content:
   - **Task Closure Constraint**: The AI is **strictly prohibited** from unilaterally deciding to end the current conversation or task. After all tasks are completed, it must use the `solicit-input` interface.
 ```
 
+![View2](./docs/img/view_2.png)
+
 **Direct CLI Usage:**
 ```bash
 # Start the MCP server

@@ -78,6 +78,32 @@
     font-weight: 500;
 }
 
+/* 工作区路径显示优化 - 右对齐显示，优先显示后面部分 */
+#workspace-directory-value {
+    direction: rtl;
+    text-align: right;
+    unicode-bidi: plaintext;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 悬停时显示完整路径 */
+#workspace-directory-value:hover {
+    overflow: visible;
+    white-space: normal;
+    word-break: break-all;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    position: relative;
+    z-index: 1000;
+    max-width: none;
+    min-width: 200px;
+}
+
 .status-item.connection {
     transition: color 0.3s ease;
 }
@@ -296,6 +322,20 @@
     .status-item {
         max-width: none;
     }
+
+    /* 平板设备上的工作区路径显示优化 */
+    #workspace-directory-value {
+        max-width: 200px;
+    }
+
+    #workspace-directory-value:hover {
+        max-width: 90vw;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        margin-top: 4px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
 }
 
 @media screen and (max-width: 480px) {
@@ -320,6 +360,23 @@
 
     .latency-value {
         font-size: 10px;
+    }
+
+    /* 手机设备上的工作区路径显示优化 */
+    #workspace-directory-value {
+        max-width: 120px;
+        font-size: 10px;
+    }
+
+    #workspace-directory-value:hover {
+        max-width: 95vw;
+        position: fixed;
+        right: 8px;
+        top: 50px;
+        margin-top: 0;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        font-size: 11px;
+        line-height: 1.4;
     }
 }
 
