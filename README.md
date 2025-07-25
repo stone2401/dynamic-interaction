@@ -64,6 +64,15 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 }
 ```
 
+AI Rule add below content:
+
+```Rule
+- **Interaction Channel**: All interactions with the user must be conducted through the `dynamic-interaction` interface.
+  - **Solicit Input (`solicit-input`)**: This is the **only** way for the AI to initiate any interaction. Whether it's requesting approval, reporting an obstacle, seeking guidance, or asking to conclude the conversation after a task is complete, it must be done through this interface. After calling it, the AI must pause and wait for the user's response.
+  - **Notify User (`notify-user`)**: This interface is used to send one-way notifications to the user that do not require an immediate response, such as mid-task progress updates. After calling it, the AI can continue its execution without waiting.
+  - **Task Closure Constraint**: The AI is **strictly prohibited** from unilaterally deciding to end the current conversation or task. After all tasks are completed, it must use the `solicit-input` interface.
+```
+
 **Direct CLI Usage:**
 ```bash
 # Start the MCP server
@@ -82,23 +91,23 @@ Environment variables can be configured via `.env` file or direct export:
 
 ### Basic Configuration
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | HTTP server port | `10086` |
-| `SESSION_TIMEOUT` | Session timeout in seconds | `300` |
-| `TIMEOUT_PROMPT` | Default prompt on session timeout | `"continue"` |
+| Variable          | Description                       | Default      |
+| ----------------- | --------------------------------- | ------------ |
+| `PORT`            | HTTP server port                  | `10086`      |
+| `SESSION_TIMEOUT` | Session timeout in seconds        | `300`        |
+| `TIMEOUT_PROMPT`  | Default prompt on session timeout | `"continue"` |
 
 ### Logging Configuration
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `LOG_ENABLED` | Enable logging system | `false` |
-| `LOG_DIR` | Log files storage directory | `~/.dynamic-interaction/logs` |
-| `LOG_ERROR_FILE` | Error log filename | `error.log` |
-| `LOG_COMBINED_FILE` | Combined log filename | `combined.log` |
-| `LOG_LEVEL` | Log level (error, warn, info, http, verbose, debug, silly) | `info` |
-| `LOG_COLORIZE` | Colorized console output | `true` |
-| `LOG_TO_FILE` | Output logs to file (requires LOG_ENABLED=true) | `true` |
+| Variable            | Description                                                | Default                       |
+| ------------------- | ---------------------------------------------------------- | ----------------------------- |
+| `LOG_ENABLED`       | Enable logging system                                      | `false`                       |
+| `LOG_DIR`           | Log files storage directory                                | `~/.dynamic-interaction/logs` |
+| `LOG_ERROR_FILE`    | Error log filename                                         | `error.log`                   |
+| `LOG_COMBINED_FILE` | Combined log filename                                      | `combined.log`                |
+| `LOG_LEVEL`         | Log level (error, warn, info, http, verbose, debug, silly) | `info`                        |
+| `LOG_COLORIZE`      | Colorized console output                                   | `true`                        |
+| `LOG_TO_FILE`       | Output logs to file (requires LOG_ENABLED=true)            | `true`                        |
 
 **Example:**
 ```bash

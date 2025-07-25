@@ -62,6 +62,15 @@
 }
 ```
 
+AI Rule 中添加如下内容：
+
+```Rule
+- **交互通道**：所有与用户的交互都必须通过 `dynamic-interaction` 接口进行。
+  - **输入请求 (`solicit-input`)**：这是 AI 发起所有交互的 **唯一** 方式。无论是请求审批、报告障碍、寻求指导，还是在任务完成后请求结束对话，都必须通过此接口。调用后，AI 必须暂停并等待用户响应。
+  - **用户通知 (`notify-user`)**：此接口用于向用户发送无需其立即回应的单向通知，如中途进度更新。调用后，AI 无需等待即可继续执行。
+  - **任务关闭约束**：AI **严禁**单方面决定结束当前对话或任务。所有任务完成后，必须通过 `solicit-input` 接
+```
+
 **直接 CLI 使用：**
 ```bash
 # 启动 MCP 服务器
@@ -80,24 +89,24 @@ pnpm run build
 
 ### 基础配置
 
-| 变量名 | 描述 | 默认值 |
-|--------|------|--------|
-| `PORT` | HTTP 服务器端口 | `10086` |
-| `SESSION_TIMEOUT` | 会话超时时间（秒） | `300` |
-| `DEFAULT_LANGUAGE` | 默认界面语言（`zh`、`en` 等） | `zh` |
-| `TIMEOUT_PROMPT` | 会话超时时的默认提示 | `"continue"` |
+| 变量名             | 描述                          | 默认值       |
+| ------------------ | ----------------------------- | ------------ |
+| `PORT`             | HTTP 服务器端口               | `10086`      |
+| `SESSION_TIMEOUT`  | 会话超时时间（秒）            | `300`        |
+| `DEFAULT_LANGUAGE` | 默认界面语言（`zh`、`en` 等） | `zh`         |
+| `TIMEOUT_PROMPT`   | 会话超时时的默认提示          | `"continue"` |
 
 ### 日志配置
 
-| 变量名 | 描述 | 默认值 |
-|--------|------|--------|
-| `LOG_ENABLED` | 启用日志系统 | `false` |
-| `LOG_DIR` | 日志文件存储目录 | `~/.dynamic-interaction/logs` |
-| `LOG_ERROR_FILE` | 错误日志文件名 | `error.log` |
-| `LOG_COMBINED_FILE` | 综合日志文件名 | `combined.log` |
-| `LOG_LEVEL` | 日志级别 (error, warn, info, http, verbose, debug, silly) | `info` |
-| `LOG_COLORIZE` | 控制台输出彩色日志 | `true` |
-| `LOG_TO_FILE` | 将日志输出到文件（需要 LOG_ENABLED=true） | `true` |
+| 变量名              | 描述                                                      | 默认值                        |
+| ------------------- | --------------------------------------------------------- | ----------------------------- |
+| `LOG_ENABLED`       | 启用日志系统                                              | `false`                       |
+| `LOG_DIR`           | 日志文件存储目录                                          | `~/.dynamic-interaction/logs` |
+| `LOG_ERROR_FILE`    | 错误日志文件名                                            | `error.log`                   |
+| `LOG_COMBINED_FILE` | 综合日志文件名                                            | `combined.log`                |
+| `LOG_LEVEL`         | 日志级别 (error, warn, info, http, verbose, debug, silly) | `info`                        |
+| `LOG_COLORIZE`      | 控制台输出彩色日志                                        | `true`                        |
+| `LOG_TO_FILE`       | 将日志输出到文件（需要 LOG_ENABLED=true）                 | `true`                        |
 
 **示例：**
 ```bash
