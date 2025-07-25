@@ -93,11 +93,12 @@ Environment variables can be configured via `.env` file or direct export:
 
 ### Basic Configuration
 
-| Variable          | Description                       | Default      |
-| ----------------- | --------------------------------- | ------------ |
-| `PORT`            | HTTP server port                  | `10086`      |
-| `SESSION_TIMEOUT` | Session timeout in seconds        | `300`        |
-| `TIMEOUT_PROMPT`  | Default prompt on session timeout | `"continue"` |
+| Variable           | Description                                | Default      |
+| ------------------ | ------------------------------------------ | ------------ |
+| `PORT`             | HTTP server port                           | `10086`      |
+| `SESSION_TIMEOUT`  | Session timeout in seconds                 | `300`        |
+| `TIMEOUT_PROMPT`   | Default prompt on session timeout          | `"continue"` |
+| `DEFAULT_LANGUAGE` | Default interface language ("zh"、"en" 等) | "zh"         |
 
 ### Logging Configuration
 
