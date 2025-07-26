@@ -54,11 +54,14 @@
 
 ```json
 {
-  "mcpServers": {
     "dynamic-interaction": {
-      "command": "dynamic-interaction"
-    }
-  }
+      "command": "npx",
+      "args": [
+        "-y",
+        "dynamic-interaction@latest"
+      ],
+      "env": {}
+    },
 }
 ```
 

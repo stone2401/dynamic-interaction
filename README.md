@@ -55,13 +55,14 @@ A Node.js/TypeScript-based interactive AI agent system that provides a rich Web 
 Add to your MCP client configuration (e.g., Claude Desktop):
 
 ```json
-{
-  "mcpServers": {
     "dynamic-interaction": {
-      "command": "dynamic-interaction"
-    }
-  }
-}
+      "command": "npx",
+      "args": [
+        "-y",
+        "dynamic-interaction@latest"
+      ],
+      "env": {}
+    },
 ```
 
 AI Rule add below content:
