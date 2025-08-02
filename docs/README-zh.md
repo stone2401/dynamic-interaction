@@ -7,6 +7,9 @@
 ## ✨ 核心特性
 
 - **多模态交互**：支持文本和图片输入，提供实时反馈
+- **双重 UI 模式**：
+  - **浏览器模式**：传统 Web 界面，支持浏览器通知
+  - **Electron 模式**：原生桌面应用体验，增强窗口管理
 - **Web 通知系统**：浏览器原生通知确保用户不会错过重要信息，即使在后台标签页也能及时提醒
 - **双重 MCP 工具**：
   - `solicit-input`：交互模式，通过 Web 界面收集用户反馈
@@ -16,6 +19,7 @@
 - **实时通信**：基于 WebSocket 的前后端实时更新
 - **响应式 UI**：现代化、简洁的界面，支持深色/浅色主题切换
 - **页面可见性检测**：自动检测用户是否切换到后台标签页
+- **窗口焦点管理**：需要交互时自动窗口前置（Electron 模式）
 
 ## 🛠️ 技术栈
 
@@ -38,14 +42,25 @@
    npm install -g dynamic-interaction
    ```
 
-2. **或从源码安装：**
+2. **支持 Electron GUI（可选）：**
+   ```bash
+   npm install -g dynamic-interaction electron
+   ```
+
+3. **或从源码安装：**
    ```bash
    git clone https://github.com/stone2401/dynamic-interaction.git
    cd dynamic-interaction
    pnpm install
+   
+   # 支持 Electron
+   pnpm install electron --save-optional
+   
    pnpm run build
    make link  # 链接为全局 CLI 工具
    ```
+
+**注意**：Electron 是可选依赖。系统在没有安装 Electron 的情况下可以完美运行在浏览器模式。
 
 ### 使用方法
 
@@ -78,14 +93,23 @@ AI Rule 中添加如下内容：
 
 **直接 CLI 使用：**
 ```bash
-# 启动 MCP 服务器
+# 启动 MCP 服务器（浏览器模式）
 dynamic-interaction
+
+# 启动 Electron 模式
+UI_MODE=electron dynamic-interaction
 
 # 开发模式
 pnpm run dev
 
+# 开发模式（Electron）
+pnpm run dev:electron
+
 # 构建项目
 pnpm run build
+
+# 启动 Electron（构建后）
+pnpm run start:electron
 ```
 
 ## 🔧 配置选项
@@ -101,6 +125,16 @@ pnpm run build
 | `DEFAULT_LANGUAGE` | 默认界面语言（`zh`、`en` 等） | `zh`         |
 | `TIMEOUT_PROMPT`   | 会话超时时的默认提示          | `"continue"` |
 
+### Electron GUI 配置
+
+| 变量名                     | 描述                           | 默认值      |
+| -------------------------- | ------------------------------ | ----------- |
+| `UI_MODE`                  | UI 模式（"browser" 或 "electron"） | `"browser"` |
+| `ELECTRON_WINDOW_WIDTH`    | Electron 窗口宽度              | `1200`      |
+| `ELECTRON_WINDOW_HEIGHT`   | Electron 窗口高度              | `800`       |
+
+**注意**：Electron 模式需要安装 Electron 作为可选依赖。如果 Electron 不可用，系统将自动回退到浏览器模式并显示警告信息。
+
 ### 日志配置
 
 | 变量名              | 描述                                                      | 默认值                        |
@@ -113,12 +147,64 @@ pnpm run build
 | `LOG_COLORIZE`      | 控制台输出彩色日志                                        | `true`                        |
 | `LOG_TO_FILE`       | 将日志输出到文件（需要 LOG_ENABLED=true）                 | `true`                        |
 
-**示例：**
+**配置示例：**
 ```bash
+# 浏览器模式（默认）
 PORT=8080 LOG_ENABLED=true DEFAULT_LANGUAGE=en dynamic-interaction
+
+# Electron 模式，自定义窗口大小
+UI_MODE=electron ELECTRON_WINDOW_WIDTH=1400 ELECTRON_WINDOW_HEIGHT=900 dynamic-interaction
+
+# 使用 .env 文件配置
+cat > .env << EOF
+UI_MODE=electron
+ELECTRON_WINDOW_WIDTH=1400
+ELECTRON_WINDOW_HEIGHT=900
+LOG_ENABLED=true
+LOG_LEVEL=info
+DEFAULT_LANGUAGE=zh
+EOF
+dynamic-interaction
+```
+
+**MCP 客户端配置示例：**
+```json
+// Claude Desktop config.json
+{
+  "mcpServers": {
+    "dynamic-interaction": {
+      "command": "npx",
+      "args": ["-y", "dynamic-interaction@latest"],
+      "env": {
+        "UI_MODE": "electron",
+        "ELECTRON_WINDOW_WIDTH": "1400",
+        "ELECTRON_WINDOW_HEIGHT": "900",
+        "DEFAULT_LANGUAGE": "zh"
+      }
+    }
+  }
+}
 ```
 
 ## 🌟 主要功能详解
+
+### UI 模式
+
+**浏览器模式（默认）**
+- 传统 Web 界面，在默认浏览器中打开
+- 支持浏览器通知，后台感知
+- 跨平台兼容性
+- 无需额外依赖
+
+**Electron 模式**
+- 原生桌面应用体验
+- 增强的窗口管理和焦点控制
+- 自动窗口定位和大小调整
+- 更好的桌面环境集成
+- 需要 Electron 作为可选依赖
+- Electron 不可用时自动回退到浏览器模式
+- 多个交互会话复用同一实例
+- 通过上下文隔离提高安全性
 
 ### Web 通知系统
 系统提供全面的通知支持：
@@ -130,14 +216,16 @@ PORT=8080 LOG_ENABLED=true DEFAULT_LANGUAGE=en dynamic-interaction
 ### MCP 工具
 
 1. **solicit-input（交互模式）**
-   - 打开交互式 Web 界面
+   - 打开交互式界面（浏览器或 Electron，基于 UI_MODE）
    - 支持文本和图片输入
    - 实时会话管理
    - 超时自动清理
+   - Electron 模式下的窗口焦点管理
 
 2. **notify-user（通知模式）**
    - 发送通知而不等待用户输入
-   - 为后台用户显示浏览器通知
+   - 为后台用户显示浏览器通知（浏览器模式）
+   - Electron 模式下的窗口焦点提醒
    - 可自定义通知内容
 
 ### 架构亮点
@@ -161,6 +249,12 @@ src/
 │   ├── session/        # 会话管理
 │   ├── websocket/      # WebSocket 连接管理
 │   └── notifications/  # 通知存储
+├── electron/           # Electron 桌面应用
+│   ├── main.ts         # Electron 主进程
+│   ├── window-manager.ts # 窗口管理
+│   ├── lifecycle.ts    # 应用生命周期
+│   ├── launcher.ts     # Electron 启动器服务
+│   └── preload.ts      # 安全预加载脚本
 ├── public/             # 前端资源
 │   ├── ts/             # TypeScript 前端代码
 │   │   ├── services/   # WebSocket 通信、通知、主题
@@ -185,16 +279,49 @@ pnpm install
 # 开发模式（热重载）
 pnpm run dev
 
+# 开发模式（Electron）
+NODE_ENV=development UI_MODE=electron pnpm run dev
+
 # 生产构建
 pnpm run build
 
 # 启动构建后的应用
 pnpm start
 
+# 启动 Electron 模式
+UI_MODE=electron pnpm start
+
 # 使用 Makefile 的替代构建方式
 make build
 make start
 ```
+
+### 故障排除
+
+**Electron 模式无法工作：**
+```bash
+# 检查 Electron 是否已安装
+electron --version
+
+# 如果未安装，进行安装
+npm install -g electron
+
+# 验证配置
+echo $UI_MODE  # 应该是 "electron"
+```
+
+**窗口大小问题：**
+```bash
+# 检查配置值
+echo $ELECTRON_WINDOW_WIDTH
+echo $ELECTRON_WINDOW_HEIGHT
+
+# 设置有效值（仅数字）
+export ELECTRON_WINDOW_WIDTH=1200
+export ELECTRON_WINDOW_HEIGHT=800
+```
+
+**详细故障排除请参阅 [故障排除指南](../guides/electron-troubleshooting.md)**
 
 ### 前端开发
 
@@ -236,11 +363,19 @@ make start
 
 ## 📚 文档资源
 
-详细文档请参阅 `docs/` 目录：
-- 架构概览
-- API 参考
-- 部署指南
-- 配置选项
+### 核心文档
+- [开发指南](./DEVELOPMENT.md) - 开发设置和指导原则
+- [English Documentation](../README.md) - English documentation
+
+### Electron GUI 文档
+- [Electron 设置指南](./guides/electron-setup-guide.md) - 完整安装和设置指南
+- [配置参考](./guides/electron-configuration.md) - 所有配置选项和示例
+- [故障排除指南](./guides/electron-troubleshooting.md) - 常见问题和解决方案
+- [安全指南](./guides/electron-security.md) - 安全考虑和最佳实践
+
+### 其他指南
+- [Web 通知指南](./guides/web-notifications-guide.md) - 浏览器通知设置
+- [功能规范](./specs/) - 详细功能规范和设计
 
 ## 🤝 贡献指南
 

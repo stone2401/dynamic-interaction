@@ -39,3 +39,57 @@ export const LOG_CONFIG = {
     // 是否将日志输出到文件
     fileLogging: process.env.LOG_TO_FILE !== 'false' && process.env.LOG_ENABLED === 'true' // 默认禁用，仅在两个开关都打开时启用
 };
+
+/**
+ * 验证 UI 模式配置
+ * @param mode UI 模式字符串
+ * @returns 验证后的 UI 模式，无效时返回 'browser'
+ */
+function validateUIMode(mode: string | undefined): 'browser' | 'electron' {
+    if (mode === 'electron' || mode === 'browser') {
+        return mode;
+    }
+    return 'browser';
+}
+
+/**
+ * 验证窗口尺寸配置
+ * @param value 尺寸值
+ * @param defaultValue 默认值
+ * @param min 最小值
+ * @param max 最大值
+ * @returns 验证后的尺寸值
+ */
+function validateWindowSize(value: string | undefined, defaultValue: number, min: number = 400, max: number = 4000): number {
+    if (!value) return defaultValue;
+
+    const parsed = Number(value);
+    if (isNaN(parsed) || parsed < min || parsed > max) {
+        return defaultValue;
+    }
+
+    return parsed;
+}
+
+// Electron GUI 配置
+export const ELECTRON_CONFIG = {
+    // UI 模式：'browser' 或 'electron'
+    uiMode: validateUIMode(process.env.UI_MODE),
+    // 是否启用 Electron 模式
+    enabled: validateUIMode(process.env.UI_MODE) === 'electron',
+    // 窗口宽度
+    windowWidth: validateWindowSize(process.env.ELECTRON_WINDOW_WIDTH, 1200),
+    // 窗口高度
+    windowHeight: validateWindowSize(process.env.ELECTRON_WINDOW_HEIGHT, 800),
+    // 是否启用开发者工具
+    devTools: process.env.NODE_ENV === 'development',
+    // 窗口标题
+    windowTitle: 'Dynamic Interaction MCP',
+    // 窗口是否可调整大小
+    resizable: true,
+    // 窗口是否居中显示
+    center: true,
+    // 最小窗口尺寸
+    minWidth: 800,
+    minHeight: 600
+};
