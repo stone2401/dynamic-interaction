@@ -9,9 +9,6 @@ A Node.js/TypeScript-based interactive AI agent system that provides a rich Web 
 ## ✨ Features
 
 - **Multi-modal Interaction**: Support for text and image inputs with real-time feedback
-- **Dual UI Modes**: 
-  - **Browser Mode**: Traditional web interface with browser notifications
-  - **Electron Mode**: Native desktop application with enhanced window management
 - **Web Notifications**: Browser-native notifications ensure you never miss important messages, even when the tab is in the background
 - **Dual MCP Tools**:
   - `solicit-input`: Interactive mode that collects user feedback through a web interface
@@ -21,7 +18,6 @@ A Node.js/TypeScript-based interactive AI agent system that provides a rich Web 
 - **Real-time Communication**: WebSocket-based live updates between frontend and backend
 - **Responsive UI**: Modern, clean interface with dark/light theme support
 - **Page Visibility Detection**: Automatically detects when users switch to background tabs
-- **Window Focus Management**: Automatic window focusing when interaction is needed (Electron mode)
 
 ## 🛠️ Tech Stack
 
@@ -44,25 +40,14 @@ A Node.js/TypeScript-based interactive AI agent system that provides a rich Web 
    npm install -g dynamic-interaction
    ```
 
-2. **For Electron GUI support (optional):**
-   ```bash
-   npm install -g dynamic-interaction electron
-   ```
-
-3. **Or install from source:**
+2. **Or install from source:**
    ```bash
    git clone https://github.com/stone2401/dynamic-interaction.git
    cd dynamic-interaction
    pnpm install
-   
-   # For Electron support
-   pnpm install electron --save-optional
-   
    pnpm run build
    make link  # Links as global CLI tool
    ```
-
-**Note**: Electron is an optional dependency. The system works perfectly in browser mode without Electron installed.
 
 ### Usage
 
@@ -93,23 +78,14 @@ AI Rule add below content:
 
 **Direct CLI Usage:**
 ```bash
-# Start the MCP server (browser mode)
+# Start the MCP server
 dynamic-interaction
-
-# Start in Electron mode
-UI_MODE=electron dynamic-interaction
 
 # Development mode
 pnpm run dev
 
-# Development with Electron
-pnpm run dev:electron
-
 # Build project
 pnpm run build
-
-# Start Electron directly (after build)
-pnpm run start:electron
 ```
 
 ## 🔧 Configuration
@@ -125,16 +101,6 @@ Environment variables can be configured via `.env` file or direct export:
 | `TIMEOUT_PROMPT`   | Default prompt on session timeout          | `"continue"` |
 | `DEFAULT_LANGUAGE` | Default interface language ("zh"、"en" 等) | "zh"         |
 
-### Electron GUI Configuration
-
-| Variable                   | Description                    | Default     |
-| -------------------------- | ------------------------------ | ----------- |
-| `UI_MODE`                  | UI mode ("browser" or "electron") | `"browser"` |
-| `ELECTRON_WINDOW_WIDTH`    | Electron window width          | `1200`      |
-| `ELECTRON_WINDOW_HEIGHT`   | Electron window height         | `800`       |
-
-**Note**: Electron mode requires Electron to be installed as an optional dependency. If Electron is not available, the system will automatically fall back to browser mode with a warning message.
-
 ### Logging Configuration
 
 | Variable            | Description                                                | Default                       |
@@ -147,50 +113,9 @@ Environment variables can be configured via `.env` file or direct export:
 | `LOG_COLORIZE`      | Colorized console output                                   | `true`                        |
 | `LOG_TO_FILE`       | Output logs to file (requires LOG_ENABLED=true)            | `true`                        |
 
-**Configuration Examples:**
-
+**Example:**
 ```bash
-# Browser mode (default)
 PORT=8080 LOG_ENABLED=true dynamic-interaction
-
-# Electron mode with custom window size
-UI_MODE=electron ELECTRON_WINDOW_WIDTH=1400 ELECTRON_WINDOW_HEIGHT=900 dynamic-interaction
-
-# Using .env file for configuration
-cat > .env << EOF
-UI_MODE=electron
-ELECTRON_WINDOW_WIDTH=1400
-ELECTRON_WINDOW_HEIGHT=900
-LOG_ENABLED=true
-LOG_LEVEL=info
-EOF
-dynamic-interaction
-
-# Development mode with Electron
-NODE_ENV=development UI_MODE=electron dynamic-interaction
-
-# Production deployment
-UI_MODE=electron PORT=10086 LOG_ENABLED=true dynamic-interaction
-```
-
-**MCP Client Configuration Examples:**
-
-```json
-// Claude Desktop config.json
-{
-  "mcpServers": {
-    "dynamic-interaction": {
-      "command": "npx",
-      "args": ["-y", "dynamic-interaction@latest"],
-      "env": {
-        "UI_MODE": "electron",
-        "ELECTRON_WINDOW_WIDTH": "1400",
-        "ELECTRON_WINDOW_HEIGHT": "900",
-        "LOG_ENABLED": "true"
-      }
-    }
-  }
-}
 ```
 
 ## 🌟 Key Features
@@ -202,37 +127,17 @@ The system provides comprehensive notification support:
 - **Page Visibility Detection**: Uses Page Visibility API to detect when users switch tabs
 - **Smart Notification Logic**: Only shows browser notifications when the page is not visible
 
-### UI Modes
-
-**Browser Mode (Default)**
-- Traditional web interface in your default browser
-- Browser notifications for background awareness
-- Cross-platform compatibility
-- No additional dependencies required
-
-**Electron Mode**
-- Native desktop application experience
-- Enhanced window management and focus control
-- Automatic window positioning and sizing
-- Better integration with desktop environment
-- Requires Electron as optional dependency
-- Automatic fallback to browser mode if Electron is unavailable
-- Session reuse across multiple interactions
-- Improved security with context isolation
-
 ### MCP Tools
 
 1. **solicit-input**
-   - Opens interactive interface (browser or Electron based on UI_MODE)
+   - Opens interactive web interface
    - Supports text and image inputs
    - Real-time session management
    - Automatic cleanup on timeout
-   - Window focus management in Electron mode
 
 2. **notify-user**
    - Sends notifications without waiting for user input
-   - Shows browser notifications for background users (browser mode)
-   - Window focus alerts in Electron mode
+   - Shows browser notifications for background users
    - Customizable notification content
 
 ### Architecture Highlights
@@ -249,12 +154,6 @@ The system provides comprehensive notification support:
 src/
 ├── mcp/           # MCP server implementation
 ├── server/        # HTTP server and WebSocket handling
-├── electron/      # Electron desktop application
-│   ├── main.ts    # Electron main process
-│   ├── window-manager.ts # Window management
-│   ├── lifecycle.ts # Application lifecycle
-│   ├── launcher.ts # Electron launcher service
-│   └── preload.ts # Preload script for security
 ├── public/        # Frontend assets
 │   ├── ts/        # TypeScript frontend code
 │   ├── css/       # Stylesheets
@@ -275,17 +174,11 @@ pnpm install
 # Development mode with hot reload
 pnpm run dev
 
-# Development with Electron
-NODE_ENV=development UI_MODE=electron pnpm run dev
-
 # Build for production
 pnpm run build
 
 # Start built application
 pnpm start
-
-# Start with Electron
-UI_MODE=electron pnpm start
 
 # Alternative build using Makefile
 make build
@@ -300,59 +193,13 @@ The frontend uses a modular TypeScript architecture:
 - **Utils**: Helper functions and DOM utilities
 - **Core**: Application core, event system, and type definitions
 
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Electron mode not working:**
-```bash
-# Check if Electron is installed
-electron --version
-
-# Install if missing
-npm install -g electron
-
-# Verify configuration
-echo $UI_MODE  # Should be "electron"
-```
-
-**Window size issues:**
-```bash
-# Check configuration values
-echo $ELECTRON_WINDOW_WIDTH
-echo $ELECTRON_WINDOW_HEIGHT
-
-# Set valid values (numbers only)
-export ELECTRON_WINDOW_WIDTH=1200
-export ELECTRON_WINDOW_HEIGHT=800
-```
-
-**Connection problems:**
-```bash
-# Check if port is available
-lsof -i :10086
-
-# Use different port if needed
-PORT=10087 dynamic-interaction
-```
-
-**For detailed troubleshooting, see [Troubleshooting Guide](./docs/guides/electron-troubleshooting.md)**
-
 ## 📚 Documentation
 
-### Core Documentation
-- [Development Guide](./docs/DEVELOPMENT.md) - Development setup and guidelines
-- [Chinese Documentation](./docs/README-zh.md) - 中文文档
-
-### Electron GUI Documentation
-- [Electron Setup Guide](./docs/guides/electron-setup-guide.md) - Complete installation and setup guide
-- [Configuration Reference](./docs/guides/electron-configuration.md) - All configuration options and examples
-- [Troubleshooting Guide](./docs/guides/electron-troubleshooting.md) - Common issues and solutions
-- [Security Guide](./docs/guides/electron-security.md) - Security considerations and best practices
-
-### Additional Guides
-- [Web Notifications Guide](./docs/guides/web-notifications-guide.md) - Browser notification setup
-- [Feature Specifications](./docs/specs/) - Detailed feature specifications and designs
+For detailed documentation, see the `docs/` directory:
+- Architecture overview
+- API documentation
+- Deployment guides
+- Configuration options
 
 ## 🤝 Contributing
 

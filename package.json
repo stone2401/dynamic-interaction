@@ -22,7 +22,6 @@
   "bin": {
     "dynamic-interaction": "dist/src/cli.js"
   },
-  "electronMain": "dist/src/electron/main.js",
   "files": [
     "dist"
   ],
@@ -31,17 +30,11 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc && npm run build:electron && chmod 755 dist/src/index.js dist/src/cli.js && npm run build:frontend && npm run copy-assets",
-    "build:electron": "tsc --project tsconfig.electron.json",
+    "build": "rm -rf dist && tsc && chmod 755 dist/src/index.js dist/src/cli.js && npm run build:frontend && npm run copy-assets",
     "build:frontend": "tsc --project tsconfig.frontend.json",
     "copy-assets": "mkdir -p dist/src/public/js && cp -r dist/frontend/public/ts/* dist/src/public/js/ && cp -r src/public/css dist/src/public/ && cp src/public/index.html dist/src/public/ && rm -rf dist/src/public/ts",
     "start": "node dist/src/index.js",
-    "start:electron": "electron dist/src/electron/main.js",
-    "dev": "nodemon --watch 'src/**/*.ts' --exec ts-node src/index.ts",
-    "dev:electron": "nodemon --watch 'src/electron/**/*.ts' --exec 'npm run build:electron && electron dist/src/electron/main.js'",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:run": "vitest run"
+    "dev": "nodemon --watch 'src/**/*.ts' --exec ts-node src/index.ts"
   },
   "keywords": [
     "dynamic-interaction",
@@ -56,12 +49,10 @@
     "@types/multer": "^1.4.13",
     "@types/node": "^24.0.1",
     "@types/ws": "^8.18.1",
-    "@vitest/ui": "^2.1.8",
     "copyfiles": "^2.4.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3",
-    "vitest": "^2.1.9"
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.3",
@@ -74,8 +65,5 @@
     "winston-transport": "^4.9.0",
     "ws": "^8.18.2",
     "zod": "^3.25.64"
-  },
-  "optionalDependencies": {
-    "electron": "^33.4.11"
   }
 }
