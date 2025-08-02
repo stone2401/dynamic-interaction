@@ -79,3 +79,5 @@ Thumbs.db
 
 # 可选静态站点目录
 .svelte-kit/
+
+.claude
