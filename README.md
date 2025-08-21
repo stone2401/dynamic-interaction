@@ -10,6 +10,7 @@ A Node.js/TypeScript-based interactive AI agent system that provides a rich Web 
 
 - **Multi-modal Interaction**: Support for text and image inputs with real-time feedback
 - **Web Notifications**: Browser-native notifications ensure you never miss important messages, even when the tab is in the background
+- **Desktop GUI**: Automatically downloads and opens the interface in a Sidecar window
 - **Dual MCP Tools**:
   - `solicit-input`: Interactive mode that collects user feedback through a web interface
   - `notify-user`: Notification mode that sends information to users without waiting for response
@@ -48,6 +49,8 @@ A Node.js/TypeScript-based interactive AI agent system that provides a rich Web 
    pnpm run build
    make link  # Links as global CLI tool
    ```
+
+During installation, the appropriate Sidecar binary is downloaded automatically so the desktop GUI works out of the box.
 
 ### Usage
 
@@ -100,6 +103,7 @@ Environment variables can be configured via `.env` file or direct export:
 | `SESSION_TIMEOUT`  | Session timeout in seconds                 | `300`        |
 | `TIMEOUT_PROMPT`   | Default prompt on session timeout          | `"continue"` |
 | `DEFAULT_LANGUAGE` | Default interface language ("zh"、"en" 等) | "zh"         |
+| `AUTO_OPEN_SIDECAR` | Launch Sidecar desktop GUI on server start | `true`       |
 
 ### Logging Configuration
 

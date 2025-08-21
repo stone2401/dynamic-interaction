@@ -6,6 +6,9 @@ dist/
 build/
 out/
 
+# downloaded sidecar binary
+bin/
+
 # 日志文件
 logs
 *.log

@@ -22,6 +22,9 @@ export const DEFAULT_LANGUAGE = process.env.DEFAULT_LANGUAGE || 'zh';
 // 会话租约超时时间（秒），用于处理中的任务
 export const SESSION_TIMEOUT = Number(process.env.SESSION_TIMEOUT) || 300; // 默认 5 分钟
 
+// 是否在服务器启动后自动尝试打开 Sidecar GUI
+export const AUTO_OPEN_SIDECAR = process.env.AUTO_OPEN_SIDECAR !== 'false';
+
 // 日志配置
 export const LOG_CONFIG = {
     // 是否启用日志系统
