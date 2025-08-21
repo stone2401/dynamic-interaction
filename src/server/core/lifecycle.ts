@@ -3,7 +3,6 @@
  * 负责管理服务器的启动、停止和状态
  */
 
-import { Server } from 'http';
 import { logger } from '../../logger';
 import { httpServer } from './server';
 import { webSocketManager } from '../websocket/connection';
@@ -11,6 +10,8 @@ import { sessionManager } from '../session/manager';
 import { sessionQueue } from '../session/queue';
 import { ServerState } from '../utils/types';
 import { ServerError, ErrorCodes } from '../utils/errors';
+import { AUTO_OPEN_SIDECAR } from '../../config';
+import { launchSidecar } from '../utils/sidecar';
 
 export class LifecycleManager {
   private static instance: LifecycleManager;
@@ -54,6 +55,11 @@ export class LifecycleManager {
       
       // 初始化WebSocket服务器
       webSocketManager.initialize(httpServer.getServer());
+
+      // 尝试启动 Sidecar GUI
+      if (AUTO_OPEN_SIDECAR) {
+        launchSidecar();
+      }
 
       this._state = ServerState.RUNNING;
       this._startTime = Date.now();

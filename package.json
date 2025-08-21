@@ -23,7 +23,8 @@
     "dynamic-interaction": "dist/src/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "scripts"
   ],
   "types": "dist/src/index.d.ts",
   "engines": {
@@ -34,7 +35,8 @@
     "build:frontend": "tsc --project tsconfig.frontend.json",
     "copy-assets": "mkdir -p dist/src/public/js && cp -r dist/frontend/public/ts/* dist/src/public/js/ && cp -r src/public/css dist/src/public/ && cp src/public/index.html dist/src/public/ && rm -rf dist/src/public/ts",
     "start": "node dist/src/index.js",
-    "dev": "nodemon --watch 'src/**/*.ts' --exec ts-node src/index.ts"
+    "dev": "nodemon --watch 'src/**/*.ts' --exec ts-node src/index.ts",
+    "postinstall": "node scripts/install-sidecar.js"
   },
   "keywords": [
     "dynamic-interaction",
@@ -43,7 +45,7 @@
     "windsurf",
     "trae"
   ],
-  "packageManager": "pnpm@9.10.0^",
+  "packageManager": "pnpm@9.10.0",
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/multer": "^1.4.13",

@@ -8,6 +8,7 @@
 
 - **多模态交互**：支持文本和图片输入，提供实时反馈
 - **Web 通知系统**：浏览器原生通知确保用户不会错过重要信息，即使在后台标签页也能及时提醒
+- **桌面 GUI**：安装时自动下载 Sidecar，服务器启动后会在独立窗口中打开界面
 - **双重 MCP 工具**：
   - `solicit-input`：交互模式，通过 Web 界面收集用户反馈
   - `notify-user`：通知模式，向用户发送信息而无需等待响应
@@ -46,6 +47,8 @@
    pnpm run build
    make link  # 链接为全局 CLI 工具
    ```
+
+安装过程中会自动下载适合当前平台的 Sidecar 二进制文件，GUI 开箱即用。
 
 ### 使用方法
 
@@ -100,6 +103,7 @@ pnpm run build
 | `SESSION_TIMEOUT`  | 会话超时时间（秒）            | `300`        |
 | `DEFAULT_LANGUAGE` | 默认界面语言（`zh`、`en` 等） | `zh`         |
 | `TIMEOUT_PROMPT`   | 会话超时时的默认提示          | `"continue"` |
+| `AUTO_OPEN_SIDECAR` | 服务器启动后自动尝试启动 Sidecar GUI | `true`       |
 
 ### 日志配置
 
